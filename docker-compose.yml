@@ -1,12 +1,14 @@
 version: '3.7'
 services:
     web:
-        build: .
+        build:
+            context: ./backend
+            dockerfile: ../docker/django/Dockerfile
         command: python manage.py runserver 0.0.0.0:8000
         ports:
             - "8000:8000"
         volumes:
-            - .:/app
+            - ./backend:/app
             - static_volume:/app/static
             - media_volume:/app/media
         depends_on:
