@@ -1,21 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { Modal, Button, Divider, Input } from 'antd';
-import { BrowserRouter,Routes, Route, useMatch,Outlet  } from "react-router-dom";
+import { BrowserRouter,Routes, Route, useMatch,Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import './ExtractPage.css';
 import SelectCollection from "./SelectCollection";
 
 function ExtractPage() {
 
+    let navigate = useNavigate();
     const [visible, setVisible] = useState(true);
+    const [showFooter, setShowFooter] = useState(false);
+    const [nextButtonText, setNextButtonText] = useState('');
+    const [nextButtonFunc, setNextButtonFunc] = useState(() => () =>{});
+    const [preButtonText, setPreButtonText] = useState('');
+    const [preButtonFunc, setPreButtonFunc] = useState(() => () =>{});
     const [loading, setLoading] = useState(false);
-    const [modalText, setModalText] = useState('سلام وققتون بخیر');
-    // let { path, url } = useMatch();
+    const location = useLocation();
+
+
+    useEffect(() => {
+        setShowFooter(!window.location.pathname.includes('selectcollection'));
+        if(window.location.pathname.includes('selectuser'))
+        {
+            setNextButtonText('شروع پردازش')
+            setPreButtonText('بازگشت')
+            setNextButtonFunc(() => () => {navigate('/extract/extractprogress');})
+            setPreButtonFunc(() => () => {navigate('/extract/selectcollection');})
+        }
+        else if(window.location.pathname.includes('extractprogress'))
+        {
+            setNextButtonText(false)
+            setPreButtonText('شروع مجدد')
+            setPreButtonFunc(() => () => {navigate('/extract/selectcollection');})
+            setNextButtonFunc(() => () => {})
+        }
+    }, [location])
 
 
     const handleOk = () => {
-        setModalText('The modal will be closed after two seconds');
         setLoading(true);
         setTimeout(() => {
             setVisible(false);
@@ -25,31 +48,29 @@ function ExtractPage() {
 
     const handleCancel = () => {
         console.log('Clicked cancel button');
-        setVisible(false);
+        // setVisible(false);
+        console.log(window.location.pathname)
     };
 
     return (
         <React.Fragment>
-            <Modal className={'no-header-modal no-footer-modal'} onCancel={()=>{}}
+            <Modal className={'no-header-modal'.concat(!showFooter?" no-footer-modal":"")}
+                   onCancel={()=>{}}
                    centered
                    bodyStyle={{
-                       height:'50vh',
+                       height:'fit-content',
                    }}
                     visible={visible}
                     footer={[
-                        <Button key="back" onClick={handleCancel}>
-                            Return
-                        </Button>,
-                        <Button key="submit" type="primary" loading={loading} onClick={handleOk}>
-                            Submit
-                        </Button>,
-                        <Button key="link"
-                                href="https://google.com"
-                                type="primary"
-                                loading={loading}
-                                onClick={handleOk}>
-                            Search on Google
-                        </Button>,
+                        <div className={'d-flex flex-row w-100'}>
+                            <Button className={'ms-auto'} key="back" onClick={preButtonFunc}>
+                                {preButtonText}
+                            </Button>
+                            {nextButtonText?
+                            <Button className={'me-auto'} key="submit" type="primary" loading={loading} onClick={nextButtonFunc}>
+                                {nextButtonText}
+                            </Button>:""}
+                        </div>
                     ]}>
                 <Outlet/>
             </Modal>

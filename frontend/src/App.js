@@ -8,6 +8,7 @@ import './App.css';
 import ExtractPage from "./pages/extractPage/ExtractPage";
 import SelectCollection from "./pages/extractPage/SelectCollection";
 import SelectUser from "./pages/extractPage/SelectUser";
+import ExtractProgress from "./pages/extractPage/ExtractProgress";
 
 function App() {
   return (
@@ -18,9 +19,10 @@ function App() {
             <Route index element={<Navigate to="selectcollection" replace />} />
             <Route path={'selectcollection'} element={<SelectCollection/>} />
             <Route path={'selectuser'} element={<SelectUser/>} />
-            <Route path="*" element={<Navigate to="selectcollection" replace />} />
+            <Route path={'extractprogress'} element={<ExtractProgress/>} />
+            {/*<Route path="*" element={<Navigate to="selectcollection" replace />} />*/}
         </Route>
-        <Route path="*" element={<Navigate to="extract" replace />} />
+        {/*<Route path="*" element={<Navigate to="extract" replace />} />*/}
       </Routes>
     </BrowserRouter>
   );

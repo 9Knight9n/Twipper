@@ -5,3 +5,18 @@
 .no-footer-modal .ant-modal-footer{
     display: none;
 }
+
+
+/* select user page*/
+.site-tag-plus {
+  background: #fff;
+  border-style: dashed;
+}
+.edit-tag {
+  user-select: none;
+}
+.tag-input {
+  width: 140px;
+  margin-right: 8px;
+  vertical-align: top;
+}
