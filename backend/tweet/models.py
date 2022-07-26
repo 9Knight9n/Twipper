@@ -62,4 +62,25 @@ class Tweet(models.Model):
         return self.url
 
 
+class Collection(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=256,unique=True)
+    date = models.DateField(auto_now_add=True)
+    status = models.CharField(max_length=50,default='in progress')
+
+    def __str__(self):
+        return self.name
+
+
+class CollectionTwitterUser(models.Model):
+    id = models.AutoField(primary_key=True)
+    twitter_user = models.ForeignKey(TwitterUser, on_delete=models.CASCADE)
+    collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.id
+
+
+
+
 

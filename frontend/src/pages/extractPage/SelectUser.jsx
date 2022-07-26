@@ -1,17 +1,32 @@
 import {PlusOutlined} from '@ant-design/icons';
-import {Input, Tag} from 'antd';
+import {Input, Tag, notification, Button } from 'antd';
 import React, {useEffect, useRef, useState} from 'react';
+import { useNavigate, useParams } from "react-router-dom";
+import {baseURL} from "../../components/config";
 
 const maxListSize = 5;
 
 const SelectUser = () => {
+
+  let navigate = useNavigate();
+  let params = useParams();
   const [tags, setTags] = useState([]);
   const [inputVisible, setInputVisible] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  const [editInputIndex, setEditInputIndex] = useState(-1);
-  const [editInputValue, setEditInputValue] = useState('');
   const inputRef = useRef(null);
   const editInputRef = useRef(null);
+
+
+  const isUserValid = async (username) => {
+    let requestOptions = {
+      method: 'GET',
+      redirect: 'follow'
+    };
+    return await fetch(baseURL + "tweet/twitteruser/api/" + username + "/", requestOptions)
+        .then(response => response.status === 200)
+        .catch(error => console.log('error', error));
+  }
+
   useEffect(() => {
     if (inputVisible) {
       inputRef.current?.focus();
@@ -35,25 +50,62 @@ const SelectUser = () => {
     setInputValue(e.target.value);
   };
 
-  const handleInputConfirm = () => {
-    if (inputValue && tags.indexOf(inputValue) === -1) {
+  const handleInputConfirm = async () => {
+    let error = null;
+    let trimmed = inputValue.trim();
+    if (trimmed === '')
+        error = 'empty'
+    else if (tags.indexOf(inputValue) !== -1)
+      error = "نام کاربری تکراری است."
+    else if(!(await isUserValid(inputValue)))
+      error = 'نام کاربری نامعتبر است.'
+    if(error)
+    {
+      if (error !== 'empty')
+      {
+        notification.error({
+          message: 'خطا',
+          duration: 2,
+          description: error,
+        });
+      }
+    }
+    else {
       setTags([...tags, inputValue]);
     }
-
     setInputVisible(false);
     setInputValue('');
   };
 
-  const handleEditInputChange = (e) => {
-    setEditInputValue(e.target.value);
-  };
+  const onSubmit = () => {
+    if(tags.length < 1)
+      return notification.error({
+          message: 'خطا',
+          duration: 2,
+          description: 'حداقل یک نام کاربری وارد کنید.',
+      });
+    console.log(params)
+    let myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    let raw = JSON.stringify({
+      "name": params.collection,
+      "twitter_usernames": tags
+    });
+    let requestOptions = {
+      method: 'POST',
+      headers: myHeaders,
+      body: raw,
+      redirect: 'follow'
+    };
 
-  const handleEditInputConfirm = () => {
-    const newTags = [...tags];
-    newTags[editInputIndex] = editInputValue;
-    setTags(newTags);
-    setEditInputIndex(-1);
-    setInputValue('');
+    fetch(baseURL+"tweet/collection/api/", requestOptions)
+      .then(response => {
+        if(response.status === 201)
+        {
+          navigate('/extract/extractprogress/'+params.collection);
+        }
+      })
+      .catch(error => console.log('error', error));
   };
 
   return (
@@ -61,7 +113,7 @@ const SelectUser = () => {
       <h6 className={'lh-lg'}>
           لطفا نام کاربری کاربران مدنظر خود را اضافه کنید.
       </h6>
-      <div className={'my-auto'}>
+      <div className={'my-auto pb-3'}>
         {tags.map((tag, index) => {
           return (
               <Tag
@@ -94,6 +146,15 @@ const SelectUser = () => {
             <PlusOutlined className={'me-1'}/>
           </Tag>
         )}
+      </div>
+      <div className={'d-flex flex-row w-100 pt-3 border-top'}>
+        <Button className={'ms-auto'} key="back" onClick={() => {navigate('/extract/selectcollection');}}>
+            بازگشت
+        </Button>
+        <Button className={'me-auto'} key="submit" type="primary" loading={false}
+                onClick={onSubmit}>
+            شروع پردازش
+        </Button>
       </div>
     </div>
   );

@@ -19,25 +19,6 @@ function ExtractPage() {
     const location = useLocation();
 
 
-    useEffect(() => {
-        setShowFooter(!window.location.pathname.includes('selectcollection'));
-        if(window.location.pathname.includes('selectuser'))
-        {
-            setNextButtonText('شروع پردازش')
-            setPreButtonText('بازگشت')
-            setNextButtonFunc(() => () => {navigate('/extract/extractprogress');})
-            setPreButtonFunc(() => () => {navigate('/extract/selectcollection');})
-        }
-        else if(window.location.pathname.includes('extractprogress'))
-        {
-            setNextButtonText(false)
-            setPreButtonText('شروع مجدد')
-            setPreButtonFunc(() => () => {navigate('/extract/selectcollection');})
-            setNextButtonFunc(() => () => {})
-        }
-    }, [location])
-
-
     const handleOk = () => {
         setLoading(true);
         setTimeout(() => {
@@ -61,17 +42,7 @@ function ExtractPage() {
                        height:'fit-content',
                    }}
                     visible={visible}
-                    footer={[
-                        <div className={'d-flex flex-row w-100'}>
-                            <Button className={'ms-auto'} key="back" onClick={preButtonFunc}>
-                                {preButtonText}
-                            </Button>
-                            {nextButtonText?
-                            <Button className={'me-auto'} key="submit" type="primary" loading={loading} onClick={nextButtonFunc}>
-                                {nextButtonText}
-                            </Button>:""}
-                        </div>
-                    ]}>
+                    footer={false}>
                 <Outlet/>
             </Modal>
         </React.Fragment>
