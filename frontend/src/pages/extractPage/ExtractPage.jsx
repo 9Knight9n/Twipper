@@ -30,7 +30,7 @@ function ExtractPage() {
 
     return (
         <React.Fragment>
-            <Modal className={'no-header-modal'} onCancel={()=>{}}
+            <Modal className={'no-header-modal no-footer-modal'} onCancel={()=>{}}
                    centered
                    bodyStyle={{
                        height:'50vh',
@@ -51,7 +51,6 @@ function ExtractPage() {
                             Search on Google
                         </Button>,
                     ]}>
-                hello
                 <Outlet/>
             </Modal>
         </React.Fragment>

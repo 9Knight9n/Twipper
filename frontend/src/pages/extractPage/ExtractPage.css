@@ -1,3 +1,7 @@
 .no-header-modal .ant-modal-close{
     display: none;
 }
+
+.no-footer-modal .ant-modal-footer{
+    display: none;
+}
