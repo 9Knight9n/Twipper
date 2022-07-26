@@ -1,4 +1,4 @@
-FROM node:18.6-alpine
+FROM node:16-alpine
 
 # set working directory
 WORKDIR /app
@@ -17,5 +17,4 @@ RUN npm install
 COPY . /app
 
 # start app
-# CMD ["npm", "start"]
 #ENTRYPOINT ["tail", "-f", "/dev/null"]
