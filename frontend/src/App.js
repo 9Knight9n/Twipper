@@ -1,13 +1,16 @@
 import { BrowserRouter,Routes, Route } from "react-router-dom";
+
+// css
 import './App.css';
-import ExtractPage from "./pages/ExtractPage";
+
+// views
+import ExtractPage from "./pages/extractPage/ExtractPage";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<ExtractPage />} />
-        {/*<Route path="about" element={<About />} />*/}
       </Routes>
     </BrowserRouter>
   );
