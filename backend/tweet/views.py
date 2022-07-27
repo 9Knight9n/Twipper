@@ -115,7 +115,8 @@ class TwitterUserIdApiView(APIView):
     # permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, twitter_user_username, *args, **kwargs):
-        if TwitterUser.objects.filter(username=twitter_user_username).exists():
+        user_obj = get_user_by_username(twitter_user_username)
+        if not isinstance(user_obj, str):
             return Response('valid username', status=status.HTTP_200_OK)
         else:
             return Response('invalid username', status=status.HTTP_204_NO_CONTENT)
@@ -123,7 +124,7 @@ class TwitterUserIdApiView(APIView):
 
 
 def scripts(request):
-    user = get_user_by_username('gesfandiari')
+    user = get_user_by_username('thekarami')
     result = get_user_tweets(user)
     for item in result:
         print(item)

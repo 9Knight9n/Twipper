@@ -11,40 +11,52 @@ import {baseURL} from "../../components/config";
 function ExtractProgress() {
 
     const [progress, setProgress] = useState([]);
+    const [done, setDone] = useState(false);
     const [interval, setInterval] = useState([{'name':'user1','progress':100},{'name':'user2','progress':50},{'name':'user3','progress':0}]);
 
     let navigate = useNavigate();
     let params = useParams();
 
-    const getProgress = () => {
+    const getProgress = async () => {
+        console.log('ran')
         let requestOptions = {
-          method: 'GET',
-          redirect: 'follow'
+            method: 'GET',
+            redirect: 'follow'
         };
-        fetch(baseURL+"tweet/collection/api/"+params.collection + "/", requestOptions)
-          .then(response => response.text())
-          .then(result => {
-              let temp = JSON.parse(result);
-              setProgress(temp.twitter_user_percentage)
-              if(temp.done)
-              {
-                  notification.success({
+        fetch(baseURL + "tweet/collection/api/" + params.collection + "/", requestOptions)
+            .then(response => response.text())
+            .then(result => {
+                let temp = JSON.parse(result);
+                setProgress(temp.twitter_user_percentage)
+                if (temp.done) {
+                    notification.success({
                         message: 'موفق',
                         duration: 4,
                         description: 'مجموعه مدنظر اضافه شد.',
-                  });
-                  clearInterval(interval);
-                  // return navigate('/done');
-              }
-
-          })
-          .catch(error => console.log('error', error));
+                    });
+                    // console.log('stopped1')
+                    // clearInterval(interval);
+                    return navigate('/done');
+                }
+            })
+            .catch(error => console.log('error', error));
     };
 
+    const loop = () => {
+        getProgress()
+        if(window.location.pathname.includes("extract/extractprogress")) setTimeout(loop, 2000);
+    }
+
     useEffect(() => {
-        getProgress();
-        let intervalID = setInterval(getProgress, 1000);
-        setInterval(intervalID)
+
+        loop()
+
+        // setTimeout(()=>{setDone(true)},10000)
+        // // setInterval(intervalID)
+        // return () => {
+        //     console.log('rand')
+        //     // clearInterval(intervalID);
+        // };
     }, []);
 
 
@@ -66,7 +78,7 @@ function ExtractProgress() {
                 </div>
             )}
             <div className={'d-flex flex-row w-100 pt-3 border-top'}>
-                <Button className={'ms-auto'} key="back" onClick={() => {clearInterval(interval);navigate('/extract/selectcollection');}}>
+                <Button className={'ms-auto'} key="back" onClick={() => {navigate('/extract/selectcollection');}}>
                     شروع مجدد
                 </Button>
             </div>
