@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework import permissions
 
 from scripts.User import get_user_by_username
-from scripts.Tweet import get_user_tweets
+from scripts.Tweet import get_user_tweets, save_collection_tweets
 from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION
 
@@ -35,6 +35,9 @@ class CollectionApiView(APIView):
             twitter_user_obj = TwitterUser.objects.get(username=twitter_user)
             collection_twitter_user.append(CollectionTwitterUser(twitter_user=twitter_user_obj,collection=collection))
         CollectionTwitterUser.objects.bulk_create(collection_twitter_user)
+
+        save_collection_tweets.after_response(collection)
+
         return Response("done", status=status.HTTP_201_CREATED)
 
 
@@ -55,6 +58,8 @@ class CollectionIdApiView(APIView):
     def get(self, request, collection_name, *args, **kwargs):
         max_interval = int((datetime.now() - OLDEST_TWEET_DATE).days)//int(FETCH_INTERVAL_DURATION.days)
         collection = Collection.objects.get(name=collection_name)
+        # if collection.status != 'in progress':
+        #     save_collection_tweets.after_response(collection)
         collection_twitter_user = CollectionTwitterUser.objects.filter(collection=collection).values('twitter_user__username','twitter_user__id')
         twitter_user_percentage = []
         for user in collection_twitter_user:

@@ -1,7 +1,8 @@
 import snscrape.modules.twitter as sntwitter
 from datetime import datetime, timedelta
+import after_response
 
-from tweet.models import TwitterUser, FetchedInterval, Tweet
+from tweet.models import TwitterUser, FetchedInterval, Tweet, CollectionTwitterUser
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION
 
 
@@ -67,8 +68,8 @@ def extract_user_tweets(user:TwitterUser,interval:tuple):
             lang = tweet.lang,
             sourceLabel = tweet.sourceLabel,
             tweeter_in_reply_to_tweet_id = tweet.inReplyToTweetId,
-            longitude = tweet.place.longitude if tweet.place and tweet.place.longitude else None,
-            latitude = tweet.place.latitude if tweet.place and tweet.place.latitude else None,
+            # longitude = tweet.place.longitude if tweet.place and tweet.place.longitude else None,
+            # latitude = tweet.place.latitude if tweet.place and tweet.place.latitude else None,
             fetched_interval = fetched_interval,
         ))
     return tweets_list
@@ -90,8 +91,30 @@ def get_user_tweets(user:TwitterUser):
 
     for interval in intervals:
         tweets_list = extract_user_tweets(user,interval)
-        if tweets_list is not None:
+        try:
             Tweet.objects.bulk_create(tweets_list)
+        except Exception as e:
+            print("error in bulk request.")
+            print('trying to save one by one.')
+            for obj in tweets_list:
+                try:
+                    obj.save()
+                except Exception as e:
+                    print(f'error in save of {obj}')
+                    print(e.__str__())
+                    continue
 
     return Tweet.objects.filter(twitter_user=user)
+
+
+@after_response.enable
+def save_collection_tweets(collection):
+    collection.status = 'in progress'
+    collection.save()
+    users_id = CollectionTwitterUser.objects.filter(collection=collection).values('twitter_user__id')
+    users = TwitterUser.objects.filter(id__in=[user_id['twitter_user__id'] for user_id in users_id])
+    for user in users:
+        get_user_tweets(user).count()
+    collection.status = 'done'
+    collection.save()
 

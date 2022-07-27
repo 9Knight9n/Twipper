@@ -49,7 +49,8 @@ INSTALLED_APPS = [
 
     # other apps
     'rest_framework',
-    'corsheaders'
+    'corsheaders',
+    'after_response'
 ]
 
 MIDDLEWARE = [

@@ -30,8 +30,9 @@ function ExtractProgress() {
                 setProgress(temp.twitter_user_percentage)
                 if (temp.done) {
                     notification.success({
+                        key:'done',
                         message: 'موفق',
-                        duration: 4,
+                        duration: 6,
                         description: 'مجموعه مدنظر اضافه شد.',
                     });
                     // console.log('stopped1')
