@@ -2,6 +2,7 @@ import React, {useState,useEffect} from 'react';
 import { Avatar, List, Space } from 'antd';
 import Menu from "./menu";
 import './userAnalysis.css'
+import UserProfile from "./userProfile";
 
 
 const data = Array.from({ length: 23 }).map((_, i) => ({
@@ -15,7 +16,7 @@ const data = Array.from({ length: 23 }).map((_, i) => ({
 }));
 
 
-function UserList(props) {
+function UserList({userList}) {
 
     const size = useWindowSize();
 
@@ -34,6 +35,7 @@ function UserList(props) {
     }
 
     return (
+        <>
             <List
             // bordered={true}
             itemLayout="horizontal"
@@ -54,21 +56,22 @@ function UserList(props) {
               xl: 6,
               xxl: 8,
             }}
-            dataSource={data}
+            dataSource={userList}
             renderItem={item => (
               <List.Item
-                key={item.title}
+                key={item.id}
               >
                 <List.Item.Meta
                   avatar={<Avatar src={item.avatar} />}
-                  title={<a href={item.href}>{item.title}</a>}
-                  // description={item.description}
+                  title={item.username+"@"}
+                  description={item.display_name}
                 />
                 {/*{item.content}*/}
               </List.Item>
             )}
           />
-
+            <UserProfile/>
+        </>
     );
 }
 

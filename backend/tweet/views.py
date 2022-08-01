@@ -1,6 +1,6 @@
 from datetime import datetime,timedelta
 
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -125,6 +125,22 @@ class TwitterUserIdApiView(APIView):
             return Response('valid username', status=status.HTTP_200_OK)
         else:
             return Response('invalid username', status=status.HTTP_204_NO_CONTENT)
+
+
+def get_users_by_collection(request, collection_id):
+    collection = Collection.objects.get(id=collection_id)
+    collection_twitter_user = CollectionTwitterUser.objects.filter(collection=collection).values('twitter_user__display_name','twitter_user__username','twitter_user__id','twitter_user__profile_image_url')
+    twitter_user_list = []
+    for user in collection_twitter_user:
+        twitter_user_list.append({
+            'id': user['twitter_user__id'],
+            'username': user['twitter_user__username'],
+            'display_name': user['twitter_user__display_name'] if user['twitter_user__display_name'] is not None
+                                                                else user['twitter_user__username'],
+            'avatar':user['twitter_user__profile_image_url']
+        })
+    data = {'name': collection.name,'twitter_user_list': twitter_user_list}
+    return JsonResponse(data, status=status.HTTP_200_OK)
 
 
 

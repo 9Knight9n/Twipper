@@ -16,5 +16,9 @@ urlpatterns = [
     path('twitteruser/api/<str:twitter_user_username>/', TwitterUserIdApiView.as_view()),
 
 
+    # custom api
+    path('get_users_by_collection/<int:collection_id>/', views.get_users_by_collection, name='get_users_by_collection'),
+
+
     path('scripts/', views.scripts, name='scripts'),
 ]
