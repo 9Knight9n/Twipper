@@ -11,6 +11,7 @@ import ExtractPage from "./pages/extractPage/ExtractPage";
 import SelectCollection from "./pages/extractPage/SelectCollection";
 import SelectUser from "./pages/extractPage/SelectUser";
 import ExtractProgress from "./pages/extractPage/ExtractProgress";
+import UserAnalysis from "./pages/userAnalysis/userAnalysis";
 
 function App() {
   return (
@@ -24,8 +25,8 @@ function App() {
             <Route path={'extractprogress/:collection'} element={<ExtractProgress/>} />
             <Route path="*" element={<Navigate to="selectcollection" replace />} />
         </Route>
-        <Route path="done" element={<Result icon={<SmileOutlined />} title="مجموعه مدنظر اضافه شد." extra={<Button type="primary">تمام</Button>} />} />
-        {/*<Route path="*" element={<Navigate to="extract" replace />} />*/}
+        <Route path={"useranalysis/:collection"} element={<UserAnalysis/>} />
+        <Route path="*" element={<Navigate to="extract" replace />} />
       </Routes>
     </BrowserRouter>
   );

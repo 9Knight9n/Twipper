@@ -35,29 +35,19 @@ function ExtractProgress() {
                         duration: 6,
                         description: 'مجموعه مدنظر اضافه شد.',
                     });
-                    // console.log('stopped1')
-                    // clearInterval(interval);
-                    return navigate('/done');
+                    return navigate('/useranalysis/:'+params.collection);
                 }
             })
             .catch(error => console.log('error', error));
     };
 
-    const loop = () => {
-        getProgress()
-        if(window.location.pathname.includes("extract/extractprogress")) setTimeout(loop, 2000);
+    const loop = async () => {
+        await getProgress()
+        if (window.location.pathname.includes("extract/extractprogress")) setTimeout(loop, 2000);
     }
 
     useEffect(() => {
-
-        loop()
-
-        // setTimeout(()=>{setDone(true)},10000)
-        // // setInterval(intervalID)
-        // return () => {
-        //     console.log('rand')
-        //     // clearInterval(intervalID);
-        // };
+        setTimeout(loop, 10)
     }, []);
 
 

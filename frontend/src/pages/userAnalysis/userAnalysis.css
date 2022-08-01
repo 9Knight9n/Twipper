@@ -1,0 +1,8 @@
+
+.ant-list-item{
+    padding: 0.5rem !important;
+}
+
+.ant-menu-item:nth-last-child(2){
+    margin-right: auto;
+}
