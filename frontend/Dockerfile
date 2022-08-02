@@ -9,15 +9,18 @@ ENV PATH /app/node_modules/.bin:$PATH
 # install app dependencies
 COPY package.json /app
 COPY package-lock.json /app
-RUN npm cache verify
-RUN npm install
+RUN npm ci --silent
+RUN npm install react-scripts@3.4.1 -g --silent
+RUN npm install -g serve
 
 
 # add app
 COPY . /app
 
-EXPOSE 3000
+RUN npm run build
+
+#EXPOSE 3000
 
 # start app
-CMD ["npm", "start"]
+CMD ["serve", "-s", "build"]
 #ENTRYPOINT ["tail", "-f", "/dev/null"]
