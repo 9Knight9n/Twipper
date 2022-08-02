@@ -1,112 +1,139 @@
 import { useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
+import { Select } from 'antd';
+import {baseURL} from "../../../components/config";
 
-const TweetCountChart1 = (parameters) => {
-  const [options, setOptions] = useState({});
-  const [series, setSeries] = useState([{ name: "z-score", data: [] }]);
+const { Option } = Select;
+
+let options = {
+  chart: {
+    type: "line",
+    zoom: {
+      enabled: true,
+    },
+  },
+  dataLabels: {
+    enabled: false,
+  },
+  stroke: {
+    width: 7,
+    curve: "smooth",
+  },
+
+  tooltip: {
+    shared: true,
+    intersect: false,
+    y: {
+      formatter: function (y) {
+        if (typeof y !== "undefined") {
+          return y;
+        }
+        return y;
+      },
+    },
+    z: {
+      title: "بازه زمانی :",
+    }
+  },
+  markers: {
+    size: 0,
+  },
+  noData: {
+    text: "اطلاعاتی جهت نمایش وجود ندارد.",
+    align: "center",
+    verticalAlign: "middle",
+    offsetX: 0,
+    offsetY: 0,
+    style: {
+      color: undefined,
+      fontSize: "14px",
+      fontFamily: undefined,
+    },
+  },
+  yaxis: {
+    labels: {
+      offsetX: 0,
+      offsetY: 0,
+      rotate: 0,
+    },
+    title: {
+      text: "تعداد پیام",
+      offsetX: 0,
+      offsetY: 0,
+      style: {
+        fontSize: "18px",
+        fontWeight: "normal",
+        fontFamily: undefined,
+        color: "#444444",
+      },
+    },
+  },
+  xaxis: {
+    type:'datetime',
+    // tickAmount: 2,
+    title: {
+      text: "زمان",
+      offsetX: 0,
+      offsetY: 0,
+      style: {
+        fontSize: "18px",
+        fontWeight: "normal",
+        fontFamily: undefined,
+        color: "#444444",
+      },
+    },
+  },
+};
+
+
+const TweetCountChart1 = ({userId}) => {
+  const [series, setSeries] = useState([{ name: "تعداد پیام", data: [] }]);
 
   useEffect(() => {
-    let series = [];
-    let data = [{x:1996,y:25},{x:1997,y:29},{x:1998,y:19},{x:1999,y:24},{x:2000,y:25},{x:2001,y:23},{x:2002,y:25},]
-    series.push({ data: data });
-    setSeries(series);
-    let options = {
-      chart: {
-        type: "line",
-        zoom: {
-          enabled: false,
-        },
-      },
-      dataLabels: {
-        enabled: false,
-      },
-      stroke: {
-        curve: "straight",
-      },
-
-      tooltip: {
-        shared: true,
-        intersect: false,
-        y: {
-          formatter: function (y) {
-            if (typeof y !== "undefined") {
-              return y;
-            }
-            return y;
-          },
-        },
-        // z: {
-        //   title: "سرعت: ",
-        // },
-      },
-      markers: {
-        size: 0,
-      },
-      noData: {
-        text: "اطلاعاتی جهت نمایش وجود ندارد.",
-        align: "center",
-        verticalAlign: "middle",
-        offsetX: 0,
-        offsetY: 0,
-        style: {
-          color: undefined,
-          fontSize: "14px",
-          fontFamily: undefined,
-        },
-      },
-      title: {
-        text: "مقایسه سرعت راننده با سرعت معمول او",
-        align: "center",
-        margin: 0,
-        offsetX: 0,
-        offsetY: 0,
-        floating: false,
-        style: {
-          fontSize: "20px",
-          fontWeight: "normal",
-          fontFamily: undefined,
-          color: "#444444",
-        },
-      },
-      yaxis: {
-        labels: {
-          offsetX: 0,
-          offsetY: 0,
-          rotate: 0,
-        },
-        title: {
-          text: "z-score",
-          offsetX: 0,
-          offsetY: 0,
-          style: {
-            fontSize: "18px",
-            fontWeight: "normal",
-            fontFamily: undefined,
-            color: "#444444",
-          },
-        },
-      },
-      xaxis: {
-        tickAmount: 2,
-        title: {
-          text: "z-score",
-          offsetX: 0,
-          offsetY: 0,
-          style: {
-            fontSize: "18px",
-            fontWeight: "normal",
-            fontFamily: undefined,
-            color: "#444444",
-          },
-        },
-        // categories: labels,
-      },
-    };
-
-    setOptions(options);
+    getSeries(7)
   }, []);
+
+  // useEffect(() => {
+  //   getSeries(document.getElementById('selectvalue1').valueOf())
+  // }, [userId]);
+
+
+  function getSeries(length) {
+    let requestOptions = {
+      method: 'GET',
+      redirect: 'follow'
+    };
+    fetch(baseURL + "tweet/get_user_tweet_count_chart1_by_id/" + userId.toString() + "/" + length.toString() + "/", requestOptions)
+      .then(response => response.text())
+      .then(result => {
+        let temp = JSON.parse(result);
+        let series = [];
+        series.push({ data: temp.data });
+        setSeries(series);
+      })
+      .catch(error => console.log('error', error));
+
+  }
+
+  const handleChange = (value) => {
+   getSeries(value)
+  };
+
   return (
-    <div dir={"ltr"} id="chart">
+    <div className={'d-flex flex-column'} dir={"ltr"} id="chart1">
+      <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
+        <h6 className={'my-auto'}>نمودار تعداد پیام در هر </h6>
+        <Select
+          id={'selectvalue1'}
+          defaultValue="7"
+          bordered={false}
+          onChange={handleChange}
+        >
+          <Option value="1">روز</Option>
+          <Option value="7">هفته</Option>
+          <Option value="30">ماه</Option>
+        </Select>
+      </div>
       <ReactApexChart
         options={options}
         series={series}

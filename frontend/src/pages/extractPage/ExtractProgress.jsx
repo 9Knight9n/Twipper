@@ -64,7 +64,7 @@ function ExtractProgress() {
                     <ConfigProvider direction="ltr">
                     <div className={'d-flex flex-row my-2'} dir="ltr">
                         {item.name}
-                        <Progress dir={'ltr'} className={'ms-3'} percent={item.progress} size="small" status={item.progress===100?'success':'active'} />
+                        <Progress style={{width:'calc(100% - 9rem)'}} dir={'ltr'} className={'ms-3'} percent={item.progress} size="small" status={item.progress===100?'success':'active'} />
                     </div>
                     </ConfigProvider>
                 </div>

@@ -20,3 +20,9 @@
   margin-right: 8px;
   vertical-align: top;
 }
+
+
+/* extract page */
+.ant-progress-line{
+    margin-left:auto !important;
+}

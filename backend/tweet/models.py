@@ -40,7 +40,7 @@ class Tweet(models.Model):
     twitter_user = models.ForeignKey(TwitterUser, on_delete=models.CASCADE,related_name='twitter_user')
     twitter_id = models.BigIntegerField(unique=True)
     url = models.CharField(max_length=255)
-    date = models.DateField()
+    date = models.DateTimeField()
     content = models.TextField()
     reply_count = models.IntegerField()
     retweet_count = models.IntegerField()

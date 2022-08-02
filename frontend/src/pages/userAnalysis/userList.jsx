@@ -81,6 +81,7 @@ function UserList({userList}) {
             )}
           />
             <Drawer
+                destroyOnClose={true}
                 title={`تحلیل کاربر`}
                 placement="left"
                 width={'75vw'}

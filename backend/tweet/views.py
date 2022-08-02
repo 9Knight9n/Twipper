@@ -1,5 +1,7 @@
 from datetime import datetime,timedelta
 
+import pytz
+from django.forms import model_to_dict
 from django.http import HttpResponse, JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,7 +10,7 @@ from rest_framework import permissions
 
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets
-from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval
+from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION
 
 
@@ -141,6 +143,70 @@ def get_users_by_collection(request, collection_id):
         })
     data = {'name': collection.name,'twitter_user_list': twitter_user_list}
     return JsonResponse(data, status=status.HTTP_200_OK)
+
+
+def get_user_info_by_id(request, user_id):
+    user = TwitterUser.objects.get(id=user_id)
+    user_dict = model_to_dict(user,fields=[
+        'username','id','display_name','description','verified','created','followers_count','friends_count',
+        'statuses_count','favourites_count','location','profile_image_url'
+    ])
+    return JsonResponse(user_dict, status=status.HTTP_200_OK)
+
+
+def get_user_tweet_count_chart1_by_id(request, user_id,interval):
+    tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date')
+    intervals = []
+    date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
+    if date.count() == 0:
+        return JsonResponse({'data':[]}, status=status.HTTP_200_OK)
+    date = date[0].date
+    OLDEST_TWEET_DATE_NATIVE = OLDEST_TWEET_DATE.replace(tzinfo=pytz.UTC)
+    while date >= OLDEST_TWEET_DATE_NATIVE:
+        new_date = date - timedelta(days=interval)
+        mid_date = date - timedelta(days=interval)/2
+        intervals.append(
+            {
+                'x':mid_date.strftime('%d %b'),
+                'z':date.strftime('%d %b')+new_date.strftime(' - %d %b'),
+                'range':(new_date,date),
+                'y':0
+            }
+        )
+        date = new_date
+    for tweet in tweets:
+        for interval_item in intervals:
+            if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
+                interval_item['y'] += 1
+                break
+
+    return JsonResponse({'data':[{'x':interval_item['x'],'y':interval_item['y'],'z':interval_item['z']} for interval_item in intervals]}, status=status.HTTP_200_OK)
+
+
+def get_user_tweet_count_chart2_by_id(request, user_id,interval):
+    tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date')
+    if interval == 7:
+        intervals = {
+            5:{'x':'شنبه','y':0,'z':'شنبه ها'},
+            6:{'x': 'یک شنبه','y': 0,'z': 'یک شنبه ها'},
+            0:{'x': 'دوشنبه','y': 0,'z': 'دوشنبه ها'},
+            1:{'x': 'سه شنبه','y': 0,'z': 'سه شنبه ها'},
+            2:{'x': 'چهارشنبه','y': 0,'z': 'چهارشنبه ها'},
+            3:{'x': 'پنج شنبه','y': 0,'z': 'پنج شنبه ها'},
+            4:{'x': 'جمعه','y': 0,'z': 'جمعه ها'},
+        }
+    else:
+        intervals = {i:{'x':str(i),'y':0,'z':f'ساعت {i}'} for i in range(24)}
+    if tweets.count() == 0:
+        return JsonResponse({'data':[]}, status=status.HTTP_200_OK)
+    for tweet in tweets:
+        if interval == 7:
+            intervals[tweet['date'].weekday()]['y'] += 1
+        else:
+            intervals[tweet['date'].hour]['y'] += 1
+    return JsonResponse({'data':[{'x':intervals[key]['x'],'y':intervals[key]['y'],'z':intervals[key]['z']} for key in intervals.keys()]}, status=status.HTTP_200_OK)
+
+
 
 
 

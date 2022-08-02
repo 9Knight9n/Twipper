@@ -1,53 +1,146 @@
-import React from 'react';
-import ApexChart from "react-apexcharts";
+import { useEffect, useState } from "react";
+import ReactApexChart from "react-apexcharts";
+import { Select } from 'antd';
+import {baseURL} from "../../../components/config";
 
-function TweetCountChart2(props) {
+const { Option } = Select;
 
-    const options= {
-        chart: {
-          // height: 350,
-          zoom: {
-            enabled: false
-          }
-        },
-        dataLabels: {
-          enabled: false
-        },
-        stroke: {
-          curve: 'straight'
-        },
-        title: {
-          text: 'Product Trends by Month',
-          align: 'left'
-        },
-        grid: {
-          row: {
-            colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
-            opacity: 0.5
-          },
-        },
-        xaxis: {
-            categories: [1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999]
-        }
+let options = {
+  chart: {
+    type: "line",
+    zoom: {
+      enabled: true,
     },
-    series= [
-        {
-            name: "series-1",
-            data: [30, 40, 45, 50, 49, 60, 70, 91]
+  },
+  dataLabels: {
+    enabled: false,
+  },
+  stroke: {
+    width: 7,
+    curve: "smooth",
+  },
+
+  tooltip: {
+    shared: true,
+    intersect: false,
+    y: {
+      formatter: function (y) {
+        if (typeof y !== "undefined") {
+          return y;
         }
-    ]
+        return y;
+      },
+    },
+    z: {
+      title: "زمان :",
+    }
+  },
+  markers: {
+    size: 0,
+  },
+  noData: {
+    text: "اطلاعاتی جهت نمایش وجود ندارد.",
+    align: "center",
+    verticalAlign: "middle",
+    offsetX: 0,
+    offsetY: 0,
+    style: {
+      color: undefined,
+      fontSize: "14px",
+      fontFamily: undefined,
+    },
+  },
+  yaxis: {
+    labels: {
+      offsetX: 0,
+      offsetY: 0,
+      rotate: 0,
+    },
+    title: {
+      text: "تعداد پیام",
+      offsetX: 0,
+      offsetY: 0,
+      style: {
+        fontSize: "18px",
+        fontWeight: "normal",
+        fontFamily: undefined,
+        color: "#444444",
+      },
+    },
+  },
+  xaxis: {
+    // type:'datetime',
+    // tickAmount: 2,
+    title: {
+      text: "زمان",
+      offsetX: 0,
+      offsetY: 0,
+      style: {
+        fontSize: "18px",
+        fontWeight: "normal",
+        fontFamily: undefined,
+        color: "#444444",
+      },
+    },
+  },
+};
 
 
-    return (
-        <div className="mixed-chart" dir={'ltr'}>
-            <ApexChart
-                options={options}
-                series={series}
-                type="line"
-                width="100%"
-            />
-        </div>
-    );
-}
+const TweetCountChart2 = ({userId}) => {
+  const [series, setSeries] = useState([{ name: "تعداد پیام", data: [] }]);
+
+  useEffect(() => {
+    getSeries(7)
+  }, []);
+
+  // useEffect(() => {
+  //   getSeries(document.getElementById('selectvalue1').valueOf())
+  // }, [userId]);
+
+
+  function getSeries(length) {
+    let requestOptions = {
+      method: 'GET',
+      redirect: 'follow'
+    };
+    fetch(baseURL + "tweet/get_user_tweet_count_chart2_by_id/" + userId.toString() + "/" + length.toString() + "/", requestOptions)
+      .then(response => response.text())
+      .then(result => {
+        let temp = JSON.parse(result);
+        let series = [];
+        series.push({ data: temp.data });
+        setSeries(series);
+      })
+      .catch(error => console.log('error', error));
+
+  }
+
+  const handleChange = (value) => {
+   getSeries(value)
+  };
+
+  return (
+    <div className={'d-flex flex-column'} dir={"ltr"} id="chart1">
+      <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
+        <h6 className={'my-auto'}>نمودار تعداد پیام در </h6>
+        <Select
+          id={'selectvalue1'}
+          defaultValue="7"
+          bordered={false}
+          onChange={handleChange}
+        >
+          <Option value="1">هر ساعت روز</Option>
+          <Option value="7">هر روز هفته</Option>
+        </Select>
+      </div>
+      <ReactApexChart
+        options={options}
+        series={series}
+        type="line"
+        height={385}
+      />
+    </div>
+  );
+};
 
 export default TweetCountChart2;

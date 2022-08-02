@@ -15,3 +15,7 @@
     margin-right: 0 !important;
     margin-left: 16px !important;
 }
+
+.ant-collapse-borderless{
+    background-color: transparent !important;
+}
