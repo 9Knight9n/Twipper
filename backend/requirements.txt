@@ -3,5 +3,6 @@ psycopg2>=2.8
 mysqlclient
 djangorestframework
 django-cors-headers
+django-after-response
 pandas
 snscrape
