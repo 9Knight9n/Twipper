@@ -1,2 +1,2 @@
 // export const baseURL = 'http://localhost:8000/';
-export const baseURL = 'http://django-4iwkff:8000/';
+export const baseURL = 'https://django-prod-twipper-lkn3b1.mo2.mogenius.io/';
