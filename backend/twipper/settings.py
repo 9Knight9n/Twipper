@@ -96,7 +96,7 @@ DATABASES = {
         'NAME': 'TwipperDB',
         'USER': 'dbadmin',
         'PASSWORD': '123456789',
-        'HOST': 'db-instance-dszg9j',   # Or an IP Address that your DB is hosted on
+        'HOST': 'http://db-instance',   # Or an IP Address that your DB is hosted on
         'PORT': '3306',
     }
 }
