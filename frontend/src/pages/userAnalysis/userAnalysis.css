@@ -10,3 +10,8 @@
 .ant-drawer-title{
     font-size: 160%;
 }
+
+.ant-list-item-meta-avatar{
+    margin-right: 0 !important;
+    margin-left: 16px !important;
+}

@@ -1,5 +1,5 @@
 import React, {useState,useEffect} from 'react';
-import { Avatar, List, Space } from 'antd';
+import { Avatar, List, Space,Drawer } from 'antd';
 import Menu from "./menu";
 import './userAnalysis.css'
 import UserProfile from "./userProfile";
@@ -18,6 +18,10 @@ const data = Array.from({ length: 23 }).map((_, i) => ({
 
 function UserList({userList}) {
 
+    const [selectedUserId, setSelectedUserId] = useState(null);
+
+    const [visible, setVisible] = useState(false);
+
     const size = useWindowSize();
 
     function getListSize(size) {
@@ -32,6 +36,11 @@ function UserList({userList}) {
         if(size.width >= 576)
             return 2
         return 1
+    }
+
+    function openUserProfile(id) {
+        setVisible(true)
+        setSelectedUserId(id)
     }
 
     return (
@@ -61,7 +70,8 @@ function UserList({userList}) {
               <List.Item
                 key={item.id}
               >
-                <List.Item.Meta
+                <List.Item.Meta onClick={()=>{openUserProfile(item.id)}}
+                  style={{cursor:'pointer'}}
                   avatar={<Avatar src={item.avatar} />}
                   title={item.username+"@"}
                   description={item.display_name}
@@ -70,7 +80,17 @@ function UserList({userList}) {
               </List.Item>
             )}
           />
-            <UserProfile/>
+            <Drawer
+                title={`تحلیل کاربر`}
+                placement="left"
+                width={'75vw'}
+                onClose={()=>{setVisible(false)}}
+                closable={false}
+                visible={visible}
+              >
+
+                <UserProfile selectedUserId={selectedUserId}/>
+            </Drawer>
         </>
     );
 }

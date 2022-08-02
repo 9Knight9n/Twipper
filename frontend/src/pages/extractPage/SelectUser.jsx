@@ -4,7 +4,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import { useNavigate, useParams } from "react-router-dom";
 import {baseURL} from "../../components/config";
 
-const maxListSize = 5;
+const maxListSize = 100;
 
 const SelectUser = () => {
 
@@ -102,8 +102,16 @@ const SelectUser = () => {
       .then(response => {
         if(response.status === 201)
         {
-          navigate('/extract/extractprogress/'+params.collection);
+          return  response.text()
         }
+        else
+          return null
+      }).then(result => {
+          if (result)
+          {
+            let temp = JSON.parse(result);
+            return navigate('/extract/extractprogress/'+temp.id.toString());
+          }
       })
       .catch(error => console.log('error', error));
   };

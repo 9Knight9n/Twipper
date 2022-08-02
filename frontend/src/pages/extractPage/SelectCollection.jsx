@@ -87,7 +87,7 @@ function SelectCollection() {
                             }
                             >
                         {collections.map((collection)=>
-                            <Option key={collection.id} value={collection.name}>{collection.name}</Option>
+                            <Option key={collection.id} value={collection.id}>{collection.name}</Option>
                         )}
                     </Select>
                     <Divider type="vertical" style={{height:'50px'}} className={'border-secondary mx-4 my-auto'}/>

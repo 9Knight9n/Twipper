@@ -9,7 +9,7 @@ urlpatterns = [
 
     # collection
     path('collection/api/', CollectionApiView.as_view()),
-    path('collection/api/<str:collection_name>/', CollectionIdApiView.as_view()),
+    path('collection/api/<int:collection_id>/', CollectionIdApiView.as_view()),
 
 
     # twitter_user

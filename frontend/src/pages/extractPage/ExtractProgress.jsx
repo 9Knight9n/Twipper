@@ -25,17 +25,18 @@ function ExtractProgress() {
         };
         fetch(baseURL + "tweet/collection/api/" + params.collection + "/", requestOptions)
             .then(response => response.text())
-            .then(result => {
+            .then(async result => {
                 let temp = JSON.parse(result);
                 setProgress(temp.twitter_user_percentage)
                 if (temp.done) {
                     notification.success({
-                        key:'done',
+                        key: 'done',
                         message: 'موفق',
                         duration: 6,
                         description: 'مجموعه مدنظر اضافه شد.',
                     });
-                    return navigate('/useranalysis/:'+params.collection);
+                    await new Promise(r => setTimeout(r, 2000));
+                    return navigate('/useranalysis/' + params.collection)
                 }
             })
             .catch(error => console.log('error', error));

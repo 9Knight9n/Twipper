@@ -1,40 +1,31 @@
 import { Button, Drawer, Space } from 'antd';
-import type { DrawerProps } from 'antd/es/drawer';
-import { Descriptions } from 'antd';
-import React, { useState } from 'react';
-import Chart from "../../components/chart";
+import { Descriptions,List,Avatar } from 'antd';
+import React, { useState,useEffect } from 'react';
+import TweetCountChart1 from "./charts/tweetCountChart1";
 
-function UserProfile(props) {
-    const [visible, setVisible] = useState(true);
-    const [size, setSize] = useState();
+function UserProfile({selectedUserId}) {
 
-    const showDefaultDrawer = () => {
-        setSize('default');
-        setVisible(true);
-      };
+    const [userInfo, setUserInfo] = useState({});
 
-      const showLargeDrawer = () => {
-        setSize('large');
-        setVisible(true);
-      };
+    useEffect(()=>{
+        getUserInfo(selectedUserId)
+    },[selectedUserId]);
 
-      const onClose = () => {
-        setVisible(false);
-      };
+    function getUserInfo(id) {
 
-
+    }
 
     return (
-       <Drawer
-        title={`تحلیل کاربر`}
-        placement="left"
-        width={'75vw'}
-        onClose={onClose}
-        closable={false}
-        visible={visible}
-      >
+       <>
         <Descriptions contentStyle={{fontSize:'80%'}} labelStyle={{fontSize:'90%'}}
-                      title="پروفایل کاربر"
+                      title={<div>
+                                  پروفایل کاربر
+                                    <List.Item.Meta className={'mt-3'}
+                                      avatar={<Avatar src={null} />}
+                                      title={"sqsqsq"+"@"}
+                                      description={"item.display_name"}
+                                    />
+                            </div>}
                       column={{
                         xxl: 4,
                         xl: 3,
@@ -60,8 +51,11 @@ function UserProfile(props) {
         <hr/>
         <br/>
         <div className="ant-descriptions-title" style={{marginBottom: '20px'}}>نمودار ها</div>
-        <Chart/>
-      </Drawer>
+        <div className="row">
+           <div className="col-lg-6 col-md-12"><TweetCountChart1/></div>
+           <div className="col-lg-6 col-md-12"><TweetCountChart1/></div>
+        </div>
+       </>
     );
 }
 

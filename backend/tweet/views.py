@@ -38,7 +38,7 @@ class CollectionApiView(APIView):
 
         save_collection_tweets.after_response(collection)
 
-        return Response("done", status=status.HTTP_201_CREATED)
+        return Response({'id':collection.id}, status=status.HTTP_201_CREATED)
 
 
 class CollectionIdApiView(APIView):
@@ -55,9 +55,9 @@ class CollectionIdApiView(APIView):
     #         return None
 
     # 3. Retrieve
-    def get(self, request, collection_name, *args, **kwargs):
+    def get(self, request, collection_id, *args, **kwargs):
         max_interval = int((datetime.now() - OLDEST_TWEET_DATE).days)//int(FETCH_INTERVAL_DURATION.days)
-        collection = Collection.objects.get(name=collection_name)
+        collection = Collection.objects.get(id=collection_id)
         # if collection.status != 'in progress':
         #     save_collection_tweets.after_response(collection)
         collection_twitter_user = CollectionTwitterUser.objects.filter(collection=collection).values('twitter_user__username','twitter_user__id')
