@@ -92,11 +92,11 @@ WSGI_APPLICATION = 'twipper.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'CONN_MAX_AGE': 3600,
+        'CONN_MAX_AGE': 60,
         'NAME': 'TwipperDB',
         'USER': 'dbadmin',
         'PASSWORD': '123456789',
-        'HOST': 'db',   # Or an IP Address that your DB is hosted on
+        'HOST': 'db-instance-dszg9j',   # Or an IP Address that your DB is hosted on
         'PORT': '3306',
     }
 }
