@@ -20,6 +20,7 @@ RUN echo 'alias pmm="python manage.py migrate"' >> ~/.bashrc
 RUN echo 'alias pmf="python manage.py flush"' >> ~/.bashrc
 
 RUN python manage.py makemigrations
+RUN python manage.py makemigrations tweet
 RUN python manage.py migrate
 
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
