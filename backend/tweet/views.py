@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import permissions
 
+from scripts import TFIDFExtractor
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets
 from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet
@@ -205,6 +206,14 @@ def get_user_tweet_count_chart2_by_id(request, user_id,interval):
         else:
             intervals[tweet['date'].hour]['y'] += 1
     return JsonResponse({'data':[{'x':intervals[key]['x'],'y':intervals[key]['y'],'z':intervals[key]['z']} for key in intervals.keys()]}, status=status.HTTP_200_OK)
+
+
+def get_user_TF_chart1_by_id(request, user_id, start_date, stop_date):
+    start_date = datetime.strptime(start_date+" 00:00:00", '%d-%m-%y %H:%M:%S')
+    stop_date = datetime.strptime(stop_date+" 23:59:59", '%d-%m-%y %H:%M:%S')
+    tweets = Tweet.objects.filter(twitter_user__id=user_id,date__gte=start_date,date__lte=stop_date).values('content')
+    data = TFIDFExtractor.apply(" ".join([tweet['content'] for tweet in tweets]))
+    return JsonResponse({'data':data}, status=status.HTTP_200_OK)
 
 
 

@@ -23,6 +23,7 @@ urlpatterns = [
     path('get_user_info_by_id/<int:user_id>/', views.get_user_info_by_id, name='get_user_info_by_id'),
     path('get_user_tweet_count_chart1_by_id/<int:user_id>/<int:interval>/', views.get_user_tweet_count_chart1_by_id, name='get_user_tweet_count_chart1_by_id'),
     path('get_user_tweet_count_chart2_by_id/<int:user_id>/<int:interval>/', views.get_user_tweet_count_chart2_by_id, name='get_user_tweet_count_chart2_by_id'),
+    path('get_user_TF_chart1_by_id/<int:user_id>/<str:start_date>/<str:stop_date>/', views.get_user_TF_chart1_by_id, name='get_user_TF_chart1_by_id'),
 
 
     path('scripts/', views.scripts, name='scripts'),

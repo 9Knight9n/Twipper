@@ -87,7 +87,7 @@ let options = {
 
 
 const TweetCountChart1 = ({userId}) => {
-  const [series, setSeries] = useState([{ name: "تعداد پیام", data: [] }]);
+  const [series, setSeries] = useState([{ name: "تعداد پیام ", data: [] }]);
 
   useEffect(() => {
     getSeries(7)

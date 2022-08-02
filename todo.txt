@@ -1,5 +1,2 @@
 1.  fix error with emojis
-2.  month/week/hour to tweet count diagram
-3.  words to number of use
-4.  tf-idf
-5.  month to tf-idf chart
+2.  persian stopwords
