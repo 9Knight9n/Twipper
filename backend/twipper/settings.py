@@ -96,8 +96,8 @@ DATABASES = {
         'NAME': 'TwipperDB',
         'USER': 'dbadmin',
         'PASSWORD': '123456789',
-        'HOST': 'db-instance',   # Or an IP Address that your DB is hosted on
-        'PORT': '3306',
+        'HOST': 'tcp-mo2.mogenius.io',   # Or an IP Address that your DB is hosted on
+        'PORT': '54071',
     }
 }
 
