@@ -1,3 +1,4 @@
+import pickle
 from datetime import datetime,timedelta
 
 import pytz
@@ -9,10 +10,11 @@ from rest_framework import status
 from rest_framework import permissions
 
 from scripts import TFIDFExtractor
+from scripts.LDAExtractor import LDA, percentage_results
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets
 from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet
-from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION
+from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_LOCATION
 
 
 def index(request):
@@ -216,12 +218,82 @@ def get_user_TF_chart1_by_id(request, user_id, start_date, stop_date):
     return JsonResponse({'data':data}, status=status.HTTP_200_OK)
 
 
+def get_user_LDA_chart2_by_id(request, user_id, start_date, stop_date):
+    start_date = datetime.strptime(start_date + " 00:00:00", '%d-%m-%y %H:%M:%S')
+    stop_date = datetime.strptime(stop_date + " 23:59:59", '%d-%m-%y %H:%M:%S')
+    tweets = Tweet.objects.filter(twitter_user__id=user_id, date__gte=start_date, date__lte=stop_date).values(
+        'content')
+    file = open(LDA_SAVE_LOCATION, 'rb')
+    lda_model = pickle.load(file)
+    file.close()
+    trends = lda_model.extract_trends([tweet['content'] for tweet in tweets])
+    trends = percentage_results(trends)
+    return JsonResponse({'data': trends}, status=status.HTTP_200_OK)
+
+
+def get_user_LDA_chart1_by_id(request, user_id,interval):
+    tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date','content')
+    intervals = []
+    date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
+    if date.count() == 0:
+        return JsonResponse({'data':[]}, status=status.HTTP_200_OK)
+    date = date[0].date
+    OLDEST_TWEET_DATE_NATIVE = OLDEST_TWEET_DATE.replace(tzinfo=pytz.UTC)
+    while date >= OLDEST_TWEET_DATE_NATIVE:
+        new_date = date - timedelta(days=interval)
+        mid_date = date - timedelta(days=interval)/2
+        intervals.append(
+            {
+                'x':mid_date.strftime('%d %b'),
+                'z':date.strftime('%d %b')+new_date.strftime(' - %d %b'),
+                'range':(new_date,date),
+                # 'y':0
+            }
+        )
+        date = new_date
+    file = open(LDA_SAVE_LOCATION, 'rb')
+    lda_model = pickle.load(file)
+    file.close()
+
+    trends = {'غیره':[]}
+
+    for interval_item in intervals:
+        tweets_in_interval = []
+        for tweet in tweets:
+            if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
+                tweets_in_interval.append(tweet)
+        top_trends = lda_model.extract_trends([tweet['content'] for tweet in tweets_in_interval])
+        top_trends = percentage_results(top_trends, 5)
+        weight_sum = sum(top_trends.values())
+        trends['غیره'].append(round((100-weight_sum),2))
+        for i in range(20):
+            if i not in trends.keys():
+                trends[i] = []
+            if i in top_trends.keys():
+                trends[i].append(round(top_trends[i],2))
+            else:
+                trends[i].append(0)
+
+    return JsonResponse({'data':[{'name':'trend '+str(key) if key !='غیره' else str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
+
+
+
 
 
 
 def scripts(request):
-    user = get_user_by_username('thekarami')
-    result = get_user_tweets(user)
-    for item in result:
-        print(item)
-    return HttpResponse(f"done extracting {result.count()} tweets.")
+    # load json file and store tweets as a list
+    tweets = Tweet.objects.all().values('content')
+    # create an lda class object
+    lda_model = LDA([tweet['content'] for tweet in tweets], 20)
+    with open(LDA_SAVE_LOCATION, 'wb') as output_addr:
+        pickle.dump(lda_model, output_addr, pickle.HIGHEST_PROTOCOL)
+    # print('lda model created!')
+    # trends = lda_model.extract_trends(all_tweets[100:110])
+    # print(percentage_results(trends))
+    # user = get_user_by_username('thekarami')
+    # result = get_user_tweets(user)
+
+    # for item in result:
+    #     print(item)
+    return HttpResponse(f"done.")

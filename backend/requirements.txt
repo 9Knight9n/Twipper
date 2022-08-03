@@ -7,4 +7,6 @@ django-cors-headers
 django-after-response
 pandas
 snscrape
+nltk
 gensim
+pickle5
