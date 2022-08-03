@@ -3,3 +3,6 @@ psycopg2>=2.8
 mysqlclient
 pandas
 snscrape
+nltk
+gensim
+pickle5
