@@ -11,7 +11,7 @@ from rest_framework import permissions
 import after_response
 
 from scripts import TFIDFExtractor
-from scripts.LDAExtractor import LDA, percentage_results
+from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets
 from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet
@@ -278,16 +278,18 @@ def get_user_LDA_chart1_by_id(request, user_id,interval):
     return JsonResponse({'data':[{'name':'trend '+str(key) if key !='غیره' else str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
 
 
-@after_response.enable
-def create_and_save_model():
-    tweets = Tweet.objects.all().values('content')
-    # create an lda class object
-    lda_model = LDA([tweet['content'] for tweet in tweets], 20)
-    with open(LDA_SAVE_LOCATION, 'wb') as output_addr:
-        pickle.dump(lda_model, output_addr, pickle.HIGHEST_PROTOCOL)
-
 
 def scripts(request):
+    # print('getting all tweets...')
+    # tweets = Tweet.objects.all().values('content')
+    # # create an lda class object
+    # print('creating model...')
+    # lda_model = LDA([tweet['content'] for tweet in tweets], 20)
+    # print('saving model...')
+    # with open(LDA_SAVE_LOCATION, 'wb') as output_addr:
+    #     pickle.dump(lda_model, output_addr, pickle.HIGHEST_PROTOCOL)
+    # print('done creating LDA model.')
+
     # load json file and store tweets as a list
     create_and_save_model.after_response()
     # print('lda model created!')
