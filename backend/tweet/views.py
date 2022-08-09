@@ -255,7 +255,7 @@ def get_user_LDA_chart1_by_id(request, user_id,interval):
     lda_model = pickle.load(file)
     file.close()
 
-    trends = {'غیره':[]}
+    trends = {'others':[]}
 
     for interval_item in intervals:
         tweets_in_interval = []
@@ -265,7 +265,7 @@ def get_user_LDA_chart1_by_id(request, user_id,interval):
         top_trends = lda_model.extract_trends([tweet['content'] for tweet in tweets_in_interval])
         top_trends = percentage_results(top_trends, 5)
         weight_sum = sum(top_trends.values())
-        trends['غیره'].append(round((100-weight_sum),2))
+        trends['others'].append(round((100-weight_sum),2))
         for i in range(20):
             if i not in trends.keys():
                 trends[i] = []
@@ -274,7 +274,7 @@ def get_user_LDA_chart1_by_id(request, user_id,interval):
             else:
                 trends[i].append(0)
 
-    return JsonResponse({'data':[{'name':'trend '+str(key) if key !='غیره' else str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
+    return JsonResponse({'data':[{'name':'topic '+str(key) if key !='others' else str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
 
 
 
