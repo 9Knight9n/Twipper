@@ -83,11 +83,14 @@ function UserProfile({selectedUserId}) {
                 <div className="col-12"><TFIDFChart1 userId={selectedUserId}/></div>
             </div>
         </Panel>
-        <Panel header="تحلیل موضوعات" key="4">
+        <Panel header="تحلیل موضوعات کاربر" key="4">
             <div className="row">
                {/*<div className="col-lg-6 col-md-12"><TweetCountChart1 userId={selectedUserId}/></div>*/}
                <div className="col-lg-12 col-md-12"><LDAChart1 userId={selectedUserId}/></div>
-                <br/>
+            </div>
+        </Panel>
+        <Panel header="تحلیل روند موضوعات" key="5">
+            <div className="row">
                <div className="col-lg-12 col-md-12"><LDAChart2 userId={selectedUserId}/></div>
             </div>
         </Panel>
