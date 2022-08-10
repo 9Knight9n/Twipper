@@ -9,3 +9,4 @@ snscrape
 nltk
 gensim
 pickle5
+statsmodels

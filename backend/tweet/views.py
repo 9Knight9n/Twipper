@@ -12,6 +12,7 @@ from rest_framework import permissions
 
 from scripts import TFIDFExtractor
 from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model
+from scripts.ARIMA import arima_forecast
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets
 from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet
@@ -323,6 +324,63 @@ def get_user_LDA_chart2_by_id(request, user_id,interval):
                         trends[new_key[:-1]] = []
                     trends[new_key[:-1]].append(round(top_trends[i],2))
                     break
+
+    return JsonResponse({'data':[{'name':str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
+
+
+
+def get_user_ARIMA_chart_by_id(request, user_id,interval):
+    tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date','content')
+    intervals = []
+    date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
+    if date.count() == 0:
+        return JsonResponse({'data':[]}, status=status.HTTP_200_OK)
+
+    date = date[0].date
+    OLDEST_TWEET_DATE_NATIVE = OLDEST_TWEET_DATE.replace(tzinfo=pytz.UTC)
+    while date >= OLDEST_TWEET_DATE_NATIVE:
+        new_date = date - timedelta(days=interval)
+        mid_date = date - timedelta(days=interval)/2
+        intervals.append(
+            {
+                'x':mid_date.strftime('%d %b'),
+                'z':date.strftime('%d %b')+new_date.strftime(' - %d %b'),
+                'range':(new_date,date),
+                # 'y':0
+            }
+        )
+        date = new_date
+    file = open(LDA_SAVE_LOCATION, 'rb')
+    lda_model = pickle.load(file)
+    file.close()
+
+    trends = {}
+    intervals.reverse()
+    for interval_item in intervals:
+        tweets_in_interval = []
+        for tweet in tweets:
+            if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
+                tweets_in_interval.append(tweet)
+        top_trends = lda_model.extract_trends([tweet['content'] for tweet in tweets_in_interval])
+        top_trends = percentage_results(top_trends, 8)
+        for i in range(8):
+            if i not in top_trends.keys():
+                top_trends[i]= 0
+        THRESHOLD = 0.025
+        for i, words in lda_model.model.print_topics():
+            new_key = ''
+            topics = words.split(' + ')
+            for j,topic in enumerate(topics):
+                [n, w] = topic.split('*')
+                if float(n) >= THRESHOLD or j<3:
+                    new_key += w[1:-1] + '_'
+                else:
+                    if new_key[:-1] not in trends.keys():
+                        trends[new_key[:-1]] = []
+                    trends[new_key[:-1]].append(round(top_trends[i],2))
+                    break
+
+    trends = arima_forecast(trends, forecast_intervals=8)
 
     return JsonResponse({'data':[{'name':str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
 
