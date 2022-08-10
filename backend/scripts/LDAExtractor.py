@@ -23,6 +23,7 @@ def preprocess(text,stop_words,lemmatizer):
     text = [re.sub('[^a-z]', '', word) for word in text]    # remove non english characters
 
     text = [word for word in text if word not in stop_words]  # remove stopwords
+    text = [word for word in text if len(word) > 2]  # remove short words
     text = [lemmatizer.lemmatize(word) for word in text if len(word) > 1]  # lemmatize words
 
     return text

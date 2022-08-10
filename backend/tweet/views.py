@@ -255,26 +255,31 @@ def get_user_LDA_chart1_by_id(request, user_id,interval):
     lda_model = pickle.load(file)
     file.close()
 
-    trends = {'others':[]}
+    trends = {}
 
     for interval_item in intervals:
         tweets_in_interval = []
         for tweet in tweets:
             if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
                 tweets_in_interval.append(tweet)
-        top_trends = lda_model.extract_trends([tweet['content'] for tweet in tweets_in_interval])
-        top_trends = percentage_results(top_trends, 5)
-        weight_sum = sum(top_trends.values())
-        trends['others'].append(round((100-weight_sum),2))
-        for i in range(20):
-            if i not in trends.keys():
-                trends[i] = []
-            if i in top_trends.keys():
-                trends[i].append(round(top_trends[i],2))
-            else:
-                trends[i].append(0)
 
-    return JsonResponse({'data':[{'name':'topic '+str(key) if key !='others' else str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
+        top_trends = lda_model.extract_trends([tweet['content'] for tweet in tweets_in_interval])
+        top_trends = percentage_results(top_trends, 8)
+        THRESHOLD = 0.025
+        for i, words in lda_model.model.print_topics():
+            new_key = ''
+            topics = words.split(' + ')
+            for j,topic in enumerate(topics):
+                [n, w] = topic.split('*')
+                if float(n) >= THRESHOLD or j<3:
+                    new_key += w[1:-1] + '_'
+                else:
+                    if new_key[:-1] not in trends.keys():
+                        trends[new_key[:-1]] = []
+                    trends[new_key[:-1]].append(round(top_trends[i],2))
+                    break
+
+    return JsonResponse({'data':[{'name':str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
 
 
 
