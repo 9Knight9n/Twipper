@@ -8,6 +8,7 @@ import {baseURL} from "../../components/config";
 import TweetCountChart2 from "./charts/tweetCountChart2";
 import TFIDFChart1 from "./charts/TFIDFChart1";
 import LDAChart1 from "./charts/LDAChart1";
+import LDAChart2 from "./charts/LDAChart2";
 
 const { Panel } = Collapse;
 
@@ -86,6 +87,8 @@ function UserProfile({selectedUserId}) {
             <div className="row">
                {/*<div className="col-lg-6 col-md-12"><TweetCountChart1 userId={selectedUserId}/></div>*/}
                <div className="col-lg-12 col-md-12"><LDAChart1 userId={selectedUserId}/></div>
+                <br/>
+               <div className="col-lg-12 col-md-12"><LDAChart2 userId={selectedUserId}/></div>
             </div>
         </Panel>
         {/*<div className="ant-descriptions-title" style={{marginBottom: '20px'}}></div>*/}
