@@ -1,5 +1,5 @@
 import { Button, Drawer, Space } from 'antd';
-import { Descriptions,List,Avatar } from 'antd';
+import { Descriptions,List,Avatar ,Statistic  } from 'antd';
 import {CheckCircleOutlined,CloseCircleOutlined} from '@ant-design/icons';
 import React, { useState,useEffect } from 'react';
 import { Collapse } from 'antd';
@@ -14,7 +14,7 @@ const { Panel } = Collapse;
 function UserProfile({selectedUserId}) {
 
     const [userInfo, setUserInfo] = useState({'username':null,'id':null,'display_name':null,'description':null,
-        'verified':null,'created':null,'followers_count':null,'friends_count':null,
+        'verified':null,'created':null,'followers_count':null,'friends_count':null,saved_count:null,
         'statuses_count':null,'favourites_count':null,'location':null,'profile_image_url':null});
 
     useEffect(()=>{
@@ -41,7 +41,7 @@ function UserProfile({selectedUserId}) {
     return (
        <Collapse bordered={true} defaultActiveKey={['1']} >
         <Panel header="پروفایل کاربر" key="1">
-            <Descriptions contentStyle={{fontSize:'80%'}} labelStyle={{fontSize:'90%'}}
+            <Descriptions contentStyle={{fontSize:'80%'}} labelStyle={{fontSize:'90%',alignItems: 'center'}}
                           title={<div>
                                     <List.Item.Meta className={'mt-3'}
                                       avatar={<Avatar src={userInfo.profile_image_url} />}
@@ -62,10 +62,11 @@ function UserProfile({selectedUserId}) {
                 <Descriptions.Item label="توضیحات">{userInfo.description}</Descriptions.Item>
                 <Descriptions.Item label="وضعییت تایید شدن">{userInfo.verified?<CheckCircleOutlined />:<CloseCircleOutlined />}</Descriptions.Item>
                 <Descriptions.Item label="تاریخ ثبت نام">{userInfo.created}</Descriptions.Item>
-                <Descriptions.Item label="تعداد دنبال کنندگان">{userInfo.followers_count}</Descriptions.Item>
-                <Descriptions.Item label="تعداد دوستان">{userInfo.friends_count}</Descriptions.Item>
-                <Descriptions.Item label="تعداد پیام ها">{userInfo.statuses_count}</Descriptions.Item>
-                <Descriptions.Item label="تعداد پیام های مورد علاقه">{userInfo.favourites_count}</Descriptions.Item>
+                <Descriptions.Item label="تعداد دنبال کنندگان"><Statistic valueStyle={{fontSize:'80%',fontFamily:'inherit'}} value={userInfo.followers_count} /></Descriptions.Item>
+                <Descriptions.Item label="تعداد دوستان"><Statistic valueStyle={{fontSize:'80%',fontFamily:'inherit'}} value={userInfo.friends_count} /></Descriptions.Item>
+                <Descriptions.Item label="تعداد کل پیام ها"><Statistic valueStyle={{fontSize:'80%',fontFamily:'inherit'}} value={userInfo.statuses_count} /></Descriptions.Item>
+                <Descriptions.Item label="تعداد پیام ها بارگیری شده"><Statistic valueStyle={{fontSize:'80%',fontFamily:'inherit'}} value={userInfo.saved_count} /></Descriptions.Item>
+                <Descriptions.Item label="تعداد پیام های مورد علاقه"><Statistic valueStyle={{fontSize:'80%',fontFamily:'inherit'}} value={userInfo.favourites_count} /></Descriptions.Item>
                 <Descriptions.Item label="آدرس">
                     {userInfo.location}
                 </Descriptions.Item>
