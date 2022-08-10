@@ -380,9 +380,12 @@ def get_user_ARIMA_chart_by_id(request, user_id,interval):
                     trends[new_key[:-1]].append(round(top_trends[i],2))
                     break
 
-    trends = arima_forecast(trends, forecast_intervals=8)
-
-    return JsonResponse({'data':[{'name':str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
+    trends, important_topics = arima_forecast(trends, forecast_intervals=8)
+    important_topics = important_topics[0].split('_') + important_topics[1].split('_')
+    important_topics = ' '.join(important_topics)
+    return JsonResponse({'data':[{'name':str(key),'data':trends[key]} for key in trends.keys()],
+                         'important_topics': important_topics},
+                        status=status.HTTP_200_OK)
 
 
 

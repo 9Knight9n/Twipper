@@ -92,7 +92,7 @@ let options = {
 
 const ARIMAChart = ({userId}) => {
   const [series, setSeries] = useState([{ name: "موضوع ", data: [] }]);
-
+  const [topics, setTopics] = useState([])
   useEffect(() => {
     getSeries(7)
   }, []);
@@ -112,6 +112,7 @@ const ARIMAChart = ({userId}) => {
         // let series = [];
         // series.push({ data: temp.data });
         setSeries(temp.data);
+        setTopics(temp.important_topics)
       })
       .catch(error => console.log('error', error));
 
@@ -124,9 +125,13 @@ const ARIMAChart = ({userId}) => {
   return (
     <div className={'d-flex flex-column'} dir={"ltr"} id="chart1">
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
-        <h6 className={'my-auto'}>نمودار فراوانی موضوع در هر </h6>
+        <h6 className={'my-auto'}>کلمات مهم در 2 ماه آینده: </h6>
+        <span>{topics}</span>
+      </div>
+      <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
+        <h6 className={'my-auto'}>نمودار فراوانی موضوعات در هر </h6>
         <Select
-          id={'selectvalue2'}
+          id={'selectvalue3'}
           defaultValue="7"
           bordered={false}
           onChange={handleChange}
