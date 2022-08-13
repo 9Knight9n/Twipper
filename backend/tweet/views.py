@@ -1,6 +1,7 @@
 import pickle
-from datetime import datetime, timedelta
+from datetime import datetime,timedelta
 
+import nltk
 import pytz
 from django.forms import model_to_dict
 from django.http import HttpResponse, JsonResponse
@@ -11,16 +12,15 @@ from rest_framework import permissions
 
 from scripts import TFIDFExtractor
 from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model
-from scripts.Trend.Trend import get_places, save_trends_by_date_and_place
+from scripts.ARIMA import arima_forecast
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets
-from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet, Place
+from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_LOCATION
 
 
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
-
 
 class CollectionApiView(APIView):
     # add permission to check if user is authenticated
@@ -28,7 +28,7 @@ class CollectionApiView(APIView):
 
     # 1. List all
     def get(self, request, *args, **kwargs):
-        collections = Collection.objects.all().values('name', 'id')
+        collections = Collection.objects.all().values('name','id')
         return Response(collections, status=status.HTTP_200_OK)
 
     # 2. Create
@@ -40,12 +40,12 @@ class CollectionApiView(APIView):
         collection_twitter_user = []
         for twitter_user in request.data.get('twitter_usernames'):
             twitter_user_obj = TwitterUser.objects.get(username=twitter_user)
-            collection_twitter_user.append(CollectionTwitterUser(twitter_user=twitter_user_obj, collection=collection))
+            collection_twitter_user.append(CollectionTwitterUser(twitter_user=twitter_user_obj,collection=collection))
         CollectionTwitterUser.objects.bulk_create(collection_twitter_user)
 
         save_collection_tweets.after_response(collection)
 
-        return Response({'id': collection.id}, status=status.HTTP_201_CREATED)
+        return Response({'id':collection.id}, status=status.HTTP_201_CREATED)
 
 
 class CollectionIdApiView(APIView):
@@ -63,23 +63,22 @@ class CollectionIdApiView(APIView):
 
     # 3. Retrieve
     def get(self, request, collection_id, *args, **kwargs):
-        max_interval = int((datetime.now() - OLDEST_TWEET_DATE).days) // int(FETCH_INTERVAL_DURATION.days)
+        max_interval = int((datetime.now() - OLDEST_TWEET_DATE).days)//int(FETCH_INTERVAL_DURATION.days)
         collection = Collection.objects.get(id=collection_id)
         # if collection.status != 'in progress':
         #     save_collection_tweets.after_response(collection)
-        collection_twitter_user = CollectionTwitterUser.objects.filter(collection=collection).values(
-            'twitter_user__username', 'twitter_user__id')
+        collection_twitter_user = CollectionTwitterUser.objects.filter(collection=collection).values('twitter_user__username','twitter_user__id')
         twitter_user_percentage = []
         for user in collection_twitter_user:
             intervals = FetchedInterval.objects.filter(twitter_user_id=user['twitter_user__id']).count()
             twitter_user_percentage.append({
-                'name': user['twitter_user__username'],
-                'progress': min([100, int((intervals / max_interval) * 100)])
+                'name':user['twitter_user__username'],
+                'progress':min([100,int((intervals/max_interval)*100)])
             })
         data = {
-            'name': collection.name,
-            'twitter_user_percentage': twitter_user_percentage,
-            'done': all([item['progress'] == 100 for item in twitter_user_percentage])
+            'name':collection.name,
+            'twitter_user_percentage':twitter_user_percentage,
+            'done':all([item['progress'] == 100 for item in twitter_user_percentage])
         }
         return Response(data, status=status.HTTP_200_OK)
 
@@ -137,48 +136,46 @@ class TwitterUserIdApiView(APIView):
 
 def get_users_by_collection(request, collection_id):
     collection = Collection.objects.get(id=collection_id)
-    collection_twitter_user = CollectionTwitterUser.objects.filter(collection=collection).values(
-        'twitter_user__display_name', 'twitter_user__username', 'twitter_user__id', 'twitter_user__profile_image_url')
+    collection_twitter_user = CollectionTwitterUser.objects.filter(collection=collection).values('twitter_user__display_name','twitter_user__username','twitter_user__id','twitter_user__profile_image_url')
     twitter_user_list = []
     for user in collection_twitter_user:
         twitter_user_list.append({
             'id': user['twitter_user__id'],
             'username': user['twitter_user__username'],
             'display_name': user['twitter_user__display_name'] if user['twitter_user__display_name'] is not None
-            else user['twitter_user__username'],
-            'avatar': user['twitter_user__profile_image_url']
+                                                                else user['twitter_user__username'],
+            'avatar':user['twitter_user__profile_image_url']
         })
-    data = {'name': collection.name, 'twitter_user_list': twitter_user_list}
+    data = {'name': collection.name,'twitter_user_list': twitter_user_list}
     return JsonResponse(data, status=status.HTTP_200_OK)
 
 
 def get_user_info_by_id(request, user_id):
     user = TwitterUser.objects.get(id=user_id)
-    user_dict = model_to_dict(user, fields=[
-        'username', 'id', 'display_name', 'description', 'verified', 'created', 'followers_count', 'friends_count',
-        'statuses_count', 'favourites_count', 'location', 'profile_image_url'
+    user_dict = model_to_dict(user,fields=[
+        'username','id','display_name','description','verified','created','followers_count','friends_count',
+        'statuses_count','favourites_count','location','profile_image_url'
     ])
-    user_dict['saved_count'] = Tweet.objects.filter(twitter_user=user).count()
     return JsonResponse(user_dict, status=status.HTTP_200_OK)
 
 
-def get_user_tweet_count_chart1_by_id(request, user_id, interval):
+def get_user_tweet_count_chart1_by_id(request, user_id,interval):
     tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date')
     intervals = []
     date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
     if date.count() == 0:
-        return JsonResponse({'data': []}, status=status.HTTP_200_OK)
+        return JsonResponse({'data':[]}, status=status.HTTP_200_OK)
     date = date[0].date
     OLDEST_TWEET_DATE_NATIVE = OLDEST_TWEET_DATE.replace(tzinfo=pytz.UTC)
     while date >= OLDEST_TWEET_DATE_NATIVE:
         new_date = date - timedelta(days=interval)
-        mid_date = date - timedelta(days=interval) / 2
+        mid_date = date - timedelta(days=interval)/2
         intervals.append(
             {
-                'x': mid_date.strftime('%d %b'),
-                'z': date.strftime('%d %b') + new_date.strftime(' - %d %b'),
-                'range': (new_date, date),
-                'y': 0
+                'x':mid_date.strftime('%d %b'),
+                'z':date.strftime('%d %b')+new_date.strftime(' - %d %b'),
+                'range':(new_date,date),
+                'y':0
             }
         )
         date = new_date
@@ -188,72 +185,57 @@ def get_user_tweet_count_chart1_by_id(request, user_id, interval):
                 interval_item['y'] += 1
                 break
 
-    return JsonResponse({'data': [{'x': interval_item['x'], 'y': interval_item['y'], 'z': interval_item['z']} for
-                                  interval_item in intervals]}, status=status.HTTP_200_OK)
+    return JsonResponse({'data':[{'x':interval_item['x'],'y':interval_item['y'],'z':interval_item['z']} for interval_item in intervals]}, status=status.HTTP_200_OK)
 
 
-def get_user_tweet_count_chart2_by_id(request, user_id, interval):
+def get_user_tweet_count_chart2_by_id(request, user_id,interval):
     tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date')
     if interval == 7:
         intervals = {
-            5: {'x': 'شنبه', 'y': 0, 'z': 'شنبه ها'},
-            6: {'x': 'یک شنبه', 'y': 0, 'z': 'یک شنبه ها'},
-            0: {'x': 'دوشنبه', 'y': 0, 'z': 'دوشنبه ها'},
-            1: {'x': 'سه شنبه', 'y': 0, 'z': 'سه شنبه ها'},
-            2: {'x': 'چهارشنبه', 'y': 0, 'z': 'چهارشنبه ها'},
-            3: {'x': 'پنج شنبه', 'y': 0, 'z': 'پنج شنبه ها'},
-            4: {'x': 'جمعه', 'y': 0, 'z': 'جمعه ها'},
+            5:{'x':'شنبه','y':0,'z':'شنبه ها'},
+            6:{'x': 'یک شنبه','y': 0,'z': 'یک شنبه ها'},
+            0:{'x': 'دوشنبه','y': 0,'z': 'دوشنبه ها'},
+            1:{'x': 'سه شنبه','y': 0,'z': 'سه شنبه ها'},
+            2:{'x': 'چهارشنبه','y': 0,'z': 'چهارشنبه ها'},
+            3:{'x': 'پنج شنبه','y': 0,'z': 'پنج شنبه ها'},
+            4:{'x': 'جمعه','y': 0,'z': 'جمعه ها'},
         }
     else:
-        intervals = {i: {'x': str(i), 'y': 0, 'z': f'ساعت {i}'} for i in range(24)}
+        intervals = {i:{'x':str(i),'y':0,'z':f'ساعت {i}'} for i in range(24)}
     if tweets.count() == 0:
-        return JsonResponse({'data': []}, status=status.HTTP_200_OK)
+        return JsonResponse({'data':[]}, status=status.HTTP_200_OK)
     for tweet in tweets:
         if interval == 7:
             intervals[tweet['date'].weekday()]['y'] += 1
         else:
             intervals[tweet['date'].hour]['y'] += 1
-    return JsonResponse({'data': [{'x': intervals[key]['x'], 'y': intervals[key]['y'], 'z': intervals[key]['z']} for key
-                                  in intervals.keys()]}, status=status.HTTP_200_OK)
+    return JsonResponse({'data':[{'x':intervals[key]['x'],'y':intervals[key]['y'],'z':intervals[key]['z']} for key in intervals.keys()]}, status=status.HTTP_200_OK)
 
 
 def get_user_TF_chart1_by_id(request, user_id, start_date, stop_date):
-    start_date = datetime.strptime(start_date + " 00:00:00", '%d-%m-%y %H:%M:%S')
-    stop_date = datetime.strptime(stop_date + " 23:59:59", '%d-%m-%y %H:%M:%S')
-    tweets = Tweet.objects.filter(twitter_user__id=user_id, date__gte=start_date, date__lte=stop_date).values('content')
-    data, unique = TFIDFExtractor.apply(" ".join([tweet['content'] for tweet in tweets]),30)
-    return JsonResponse({'data': data, 'unique': unique}, status=status.HTTP_200_OK)
+    start_date = datetime.strptime(start_date+" 00:00:00", '%d-%m-%y %H:%M:%S')
+    stop_date = datetime.strptime(stop_date+" 23:59:59", '%d-%m-%y %H:%M:%S')
+    tweets = Tweet.objects.filter(twitter_user__id=user_id,date__gte=start_date,date__lte=stop_date).values('content')
+    data = TFIDFExtractor.apply(" ".join([tweet['content'] for tweet in tweets]))
+    return JsonResponse({'data':data}, status=status.HTTP_200_OK)
 
 
-def get_user_LDA_chart2_by_id(request, user_id, start_date, stop_date):
-    start_date = datetime.strptime(start_date + " 00:00:00", '%d-%m-%y %H:%M:%S')
-    stop_date = datetime.strptime(stop_date + " 23:59:59", '%d-%m-%y %H:%M:%S')
-    tweets = Tweet.objects.filter(twitter_user__id=user_id, date__gte=start_date, date__lte=stop_date).values(
-        'content')
-    file = open(LDA_SAVE_LOCATION, 'rb')
-    lda_model = pickle.load(file)
-    file.close()
-    trends = lda_model.extract_trends([tweet['content'] for tweet in tweets])
-    trends = percentage_results(trends)
-    return JsonResponse({'data': trends}, status=status.HTTP_200_OK)
-
-
-def get_user_LDA_chart1_by_id(request, user_id, interval):
-    tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date', 'content')
+def get_user_LDA_chart1_by_id(request, user_id,interval):
+    tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date','content')
     intervals = []
     date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
     if date.count() == 0:
-        return JsonResponse({'data': []}, status=status.HTTP_200_OK)
+        return JsonResponse({'data':[]}, status=status.HTTP_200_OK)
     date = date[0].date
     OLDEST_TWEET_DATE_NATIVE = OLDEST_TWEET_DATE.replace(tzinfo=pytz.UTC)
     while date >= OLDEST_TWEET_DATE_NATIVE:
         new_date = date - timedelta(days=interval)
-        mid_date = date - timedelta(days=interval) / 2
+        mid_date = date - timedelta(days=interval)/2
         intervals.append(
             {
-                'x': mid_date.strftime('%d %b'),
-                'z': date.strftime('%d %b') + new_date.strftime(' - %d %b'),
-                'range': (new_date, date),
+                'x':mid_date.strftime('%d %b'),
+                'z':date.strftime('%d %b')+new_date.strftime(' - %d %b'),
+                'range':(new_date,date),
                 # 'y':0
             }
         )
@@ -262,27 +244,149 @@ def get_user_LDA_chart1_by_id(request, user_id, interval):
     lda_model = pickle.load(file)
     file.close()
 
-    trends = {'غیره': []}
+    trends = {}
+    for interval_item in intervals:
+        tweets_in_interval = []
+        for tweet in tweets:
+            if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
+                tweets_in_interval.append(tweet)
 
+        top_trends = lda_model.extract_trends([tweet['content'] for tweet in tweets_in_interval])
+        top_trends = percentage_results(top_trends, 8)
+        for i in range(8):
+            if i not in top_trends.keys():
+                top_trends[i]= 0
+        THRESHOLD = 0.025
+        for i, words in lda_model.model.print_topics():
+            new_key = ''
+            topics = words.split(' + ')
+            for j,topic in enumerate(topics):
+                [n, w] = topic.split('*')
+                if float(n) >= THRESHOLD or j<3:
+                    new_key += w[1:-1] + '_'
+                else:
+                    if new_key[:-1] not in trends.keys():
+                        trends[new_key[:-1]] = []
+                    trends[new_key[:-1]].append(round(top_trends[i],2))
+                    break
+
+    return JsonResponse({'data':[{'name':str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
+
+
+
+def get_user_LDA_chart2_by_id(request, user_id,interval):
+    tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date','content')
+    intervals = []
+    date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
+    if date.count() == 0:
+        return JsonResponse({'data':[]}, status=status.HTTP_200_OK)
+
+    date = date[0].date
+    OLDEST_TWEET_DATE_NATIVE = OLDEST_TWEET_DATE.replace(tzinfo=pytz.UTC)
+    while date >= OLDEST_TWEET_DATE_NATIVE:
+        new_date = date - timedelta(days=interval)
+        mid_date = date - timedelta(days=interval)/2
+        intervals.append(
+            {
+                'x':mid_date.strftime('%d %b'),
+                'z':date.strftime('%d %b')+new_date.strftime(' - %d %b'),
+                'range':(new_date,date),
+                # 'y':0
+            }
+        )
+        date = new_date
+    file = open(LDA_SAVE_LOCATION, 'rb')
+    lda_model = pickle.load(file)
+    file.close()
+
+    trends = {}
+    intervals.reverse()
     for interval_item in intervals:
         tweets_in_interval = []
         for tweet in tweets:
             if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
                 tweets_in_interval.append(tweet)
         top_trends = lda_model.extract_trends([tweet['content'] for tweet in tweets_in_interval])
-        top_trends = percentage_results(top_trends, 5)
-        weight_sum = sum(top_trends.values())
-        trends['غیره'].append(round((100 - weight_sum), 2))
-        for i in range(20):
-            if i not in trends.keys():
-                trends[i] = []
-            if i in top_trends.keys():
-                trends[i].append(round(top_trends[i], 2))
-            else:
-                trends[i].append(0)
+        top_trends = percentage_results(top_trends, 8)
+        for i in range(8):
+            if i not in top_trends.keys():
+                top_trends[i]= 0
+        THRESHOLD = 0.025
+        for i, words in lda_model.model.print_topics():
+            new_key = ''
+            topics = words.split(' + ')
+            for j,topic in enumerate(topics):
+                [n, w] = topic.split('*')
+                if float(n) >= THRESHOLD or j<3:
+                    new_key += w[1:-1] + '_'
+                else:
+                    if new_key[:-1] not in trends.keys():
+                        trends[new_key[:-1]] = []
+                    trends[new_key[:-1]].append(round(top_trends[i],2))
+                    break
 
-    return JsonResponse({'data': [{'name': 'trend ' + str(key) if key != 'غیره' else str(key), 'data': trends[key]} for
-                                  key in trends.keys()]}, status=status.HTTP_200_OK)
+    return JsonResponse({'data':[{'name':str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
+
+
+
+def get_user_ARIMA_chart_by_id(request, user_id,interval):
+    tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date','content')
+    intervals = []
+    date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
+    if date.count() == 0:
+        return JsonResponse({'data':[]}, status=status.HTTP_200_OK)
+
+    date = date[0].date
+    OLDEST_TWEET_DATE_NATIVE = OLDEST_TWEET_DATE.replace(tzinfo=pytz.UTC)
+    while date >= OLDEST_TWEET_DATE_NATIVE:
+        new_date = date - timedelta(days=interval)
+        mid_date = date - timedelta(days=interval)/2
+        intervals.append(
+            {
+                'x':mid_date.strftime('%d %b'),
+                'z':date.strftime('%d %b')+new_date.strftime(' - %d %b'),
+                'range':(new_date,date),
+                # 'y':0
+            }
+        )
+        date = new_date
+    file = open(LDA_SAVE_LOCATION, 'rb')
+    lda_model = pickle.load(file)
+    file.close()
+
+    trends = {}
+    intervals.reverse()
+    for interval_item in intervals:
+        tweets_in_interval = []
+        for tweet in tweets:
+            if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
+                tweets_in_interval.append(tweet)
+        top_trends = lda_model.extract_trends([tweet['content'] for tweet in tweets_in_interval])
+        top_trends = percentage_results(top_trends, 8)
+        for i in range(8):
+            if i not in top_trends.keys():
+                top_trends[i]= 0
+        THRESHOLD = 0.025
+        for i, words in lda_model.model.print_topics():
+            new_key = ''
+            topics = words.split(' + ')
+            for j,topic in enumerate(topics):
+                [n, w] = topic.split('*')
+                if float(n) >= THRESHOLD or j<3:
+                    new_key += w[1:-1] + '_'
+                else:
+                    if new_key[:-1] not in trends.keys():
+                        trends[new_key[:-1]] = []
+                    trends[new_key[:-1]].append(round(top_trends[i],2))
+                    break
+
+    trends, important_topics = arima_forecast(trends, forecast_intervals=8)
+    important_topics = important_topics[0].split('_') + important_topics[1].split('_')
+    important_topics = ' '.join(important_topics)
+    return JsonResponse({'data':[{'name':str(key),'data':trends[key]} for key in trends.keys()],
+                         'important_topics': important_topics},
+                        status=status.HTTP_200_OK)
+
 
 
 def scripts(request):
@@ -297,14 +401,13 @@ def scripts(request):
     # print('done creating LDA model.')
 
     # load json file and store tweets as a list
-    # create_and_save_model.after_response()
+    create_and_save_model.after_response()
     # print('lda model created!')
     # trends = lda_model.extract_trends(all_tweets[100:110])
     # print(percentage_results(trends))
-    # user = get_user_by_username('BarackObama')
+    # user = get_user_by_username('thekarami')
     # result = get_user_tweets(user)
-    #
+
     # for item in result:
     #     print(item)
-    print(save_trends_by_date_and_place(Place.objects.get(name='Worldwide'),day=datetime.now()))
     return HttpResponse(f"done.")

@@ -13,16 +13,17 @@ from tweet.models import Tweet
 from twipper.config import LDA_SAVE_LOCATION
 
 
-def preprocess(text,stop_words,lemmatizer):
+def preprocess(text, stop_words, lemmatizer):
     text = re.sub('(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)', '', text)  # remove links
     text = re.sub('\S*@\S*\s?', '', text)  # remove emails
     text = re.sub('\s+', ' ', text)  # remove newline chars
     text = re.sub("\'", "", text)  # remove single quotes
 
     text = simple_preprocess(str(text), deacc=True)
-    text = [re.sub('[^a-z]', '', word) for word in text]    # remove non english characters
+    text = [re.sub('[^a-z]', '', word) for word in text]  # remove non english characters
 
     text = [word for word in text if word not in stop_words]  # remove stopwords
+    text = [word for word in text if len(word) > 2]  # remove short words
     text = [lemmatizer.lemmatize(word) for word in text if len(word) > 1]  # lemmatize words
 
     return text

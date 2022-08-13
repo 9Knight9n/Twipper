@@ -9,23 +9,31 @@ let options = {
   colors : ['#C62828', '#AD1457','#4E342E', '#558B2F', '#4DB6AC', '#616161', '#6A1B9A','#D84315', '#4527A0', '#283593', '#1565C0', '#18FFFF', '#00838F', '#00695C',
     '#2E7D32', '#9E9D24', '#F9A825', '#FF8F00', '#EF6C00', '#37474F','#D84315'],
   chart: {
-    stacked: true,
-    stackType: '100%',
-    // zoom: {
-    //   enabled: true,
-    // },
+    type: 'line',
+    dropShadow: {
+      enabled: true,
+      color: '#000',
+      top: 18,
+      left: 7,
+      blur: 10,
+      opacity: 0.2
+    },
+    toolbar: {
+      show: false
+    }
   },
-  plotOptions: {
-    bar: {
-      horizontal: true,
+  grid: {
+    borderColor: '#e7e7e7',
+    row: {
+      colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
+      opacity: 0.5
     },
   },
   dataLabels: {
-    enabled: true,
+    enabled: false,
   },
   stroke: {
-    width: 3,
-    colors: ['#fff']
+    curve: 'smooth'
   },
   legend: {
     position: 'top',
@@ -43,12 +51,12 @@ let options = {
         return y;
       },
     },
-    // z: {
-    //   title: "بازه زمانی :",
-    // }
   },
   markers: {
     size: 0,
+  },
+  fill: {
+    opacity: 1
   },
   noData: {
     text: "اطلاعاتی جهت نمایش وجود ندارد.",
@@ -63,50 +71,30 @@ let options = {
     },
   },
   yaxis: {
-    labels: {
-      offsetX: 0,
-      offsetY: 0,
-      rotate: 0,
-    },
     title: {
-      text: "زمان",
-      offsetX: 10,
-      offsetY: 0,
-      style: {
-        fontSize: "18px",
-        fontWeight: "normal",
-        fontFamily: undefined,
-        color: "#444444",
-      },
+      text: "فراوانی موضوع",
     },
-  },
-  fill: {
-    opacity: 1
-  },
+    min:0,
+    },
   xaxis: {
-    categories: ['ماه قبل', 'دو ماه قبل', 'سه ماه قبل', 'چهار ماه قبل', 'پنج ماه قبل', 'شش ماه قبل'],
+    // categories: ['ماه قبل', 'دو ماه قبل', 'سه ماه قبل', 'چهار ماه قبل', 'پنج ماه قبل', 'شش ماه قبل'],
     // type:'datetime',
     // tickAmount: 2,
     title: {
-      text: "فراوانی (درصد)",
-      offsetX: 0,
-      offsetY: 0,
-      style: {
-        fontSize: "18px",
-        fontWeight: "normal",
-        fontFamily: undefined,
-        color: "#444444",
-      },
+      text: "زمان",
     },
+  },
+  forecastDataPoints: {
+    count: 8
   },
 };
 
 
-const LDAChart1 = ({userId}) => {
-  const [series, setSeries] = useState([{ name: "تعداد پیام ", data: [] }]);
-
+const ARIMAChart = ({userId}) => {
+  const [series, setSeries] = useState([{ name: "موضوع ", data: [] }]);
+  const [topics, setTopics] = useState([])
   useEffect(() => {
-    getSeries(30)
+    getSeries(7)
   }, []);
 
 
@@ -116,7 +104,7 @@ const LDAChart1 = ({userId}) => {
       method: 'GET',
       redirect: 'follow'
     };
-    fetch(baseURL + "tweet/get_user_LDA_chart1_by_id/" + userId.toString() + "/" + length.toString() + "/", requestOptions)
+    fetch(baseURL + "tweet/get_user_ARIMA_chart_by_id/" + userId.toString() + "/" + length.toString() + "/", requestOptions)
       .then(response => response.text())
       .then(result => {
         let temp = JSON.parse(result);
@@ -124,6 +112,7 @@ const LDAChart1 = ({userId}) => {
         // let series = [];
         // series.push({ data: temp.data });
         setSeries(temp.data);
+        setTopics(temp.important_topics)
       })
       .catch(error => console.log('error', error));
 
@@ -136,26 +125,29 @@ const LDAChart1 = ({userId}) => {
   return (
     <div className={'d-flex flex-column'} dir={"ltr"} id="chart1">
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
-        <h6 className={'my-auto'}>نمودار فراوانی موضوع در هر </h6>
+        <h6 className={'my-auto'}>کلمات مهم در 2 ماه آینده: </h6>
+        <span>{topics}</span>
+      </div>
+      <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
+        <h6 className={'my-auto'}>نمودار فراوانی موضوعات در هر </h6>
         <Select
-          id={'selectvalue1'}
-          defaultValue="30"
+          id={'selectvalue3'}
+          defaultValue="7"
           bordered={false}
           onChange={handleChange}
         >
-          {/*<Option value="7">هفته</Option>*/}
-          <Option value="30">ماه</Option>
+          {/*<Option value="1">روز</Option>*/}
+          <Option value="7">هفته</Option>
         </Select>
       </div>
       <ReactApexChart
         options={options}
         series={series}
-        type='bar'
-        height={385}
+        height={600}
         // xaxis={}
       />
     </div>
   );
 };
 
-export default LDAChart1;
+export default ARIMAChart;

@@ -8,6 +8,8 @@ import {baseURL} from "../../components/config";
 import TweetCountChart2 from "./charts/tweetCountChart2";
 import TFIDFChart1 from "./charts/TFIDFChart1";
 import LDAChart1 from "./charts/LDAChart1";
+import LDAChart2 from "./charts/LDAChart2";
+import ARIMAChart from "./charts/ARIMAChart";
 
 const { Panel } = Collapse;
 
@@ -83,10 +85,20 @@ function UserProfile({selectedUserId}) {
                 <div className="col-12"><TFIDFChart1 userId={selectedUserId}/></div>
             </div>
         </Panel>
-        <Panel header="تحلیل روند" key="4">
+        <Panel header="تحلیل موضوعات کاربر" key="4">
             <div className="row">
                {/*<div className="col-lg-6 col-md-12"><TweetCountChart1 userId={selectedUserId}/></div>*/}
                <div className="col-lg-12 col-md-12"><LDAChart1 userId={selectedUserId}/></div>
+            </div>
+        </Panel>
+        <Panel header="تحلیل روند موضوعات" key="5">
+            <div className="row">
+               <div className="col-lg-12 col-md-12"><LDAChart2 userId={selectedUserId}/></div>
+            </div>
+        </Panel>
+        <Panel header="تحلیل موضوعات با ARIMA" key="6">
+            <div className="row">
+               <div className="col-lg-12 col-md-12"><ARIMAChart userId={selectedUserId}/></div>
             </div>
         </Panel>
         {/*<div className="ant-descriptions-title" style={{marginBottom: '20px'}}></div>*/}
