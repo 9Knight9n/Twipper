@@ -11,10 +11,10 @@ from rest_framework import permissions
 
 from scripts import TFIDFExtractor
 from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model
-from scripts.Trend.Trend import get_places
+from scripts.Trend.Trend import get_places, save_trends_by_date_and_place
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets
-from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet
+from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet, Place
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_LOCATION
 
 
@@ -306,5 +306,5 @@ def scripts(request):
     #
     # for item in result:
     #     print(item)
-    print(get_places())
+    print(save_trends_by_date_and_place(Place.objects.get(name='Worldwide'),day=datetime.now()))
     return HttpResponse(f"done.")

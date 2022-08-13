@@ -18,7 +18,11 @@ def get_places():
 
 
 def save_trends_by_date_and_place(place: Place, day: date):
-    f = requests.get(ARCHIVE_BASE_URL + place.name + "/" + day.strftime("%m-%d-%Y"), headers=HEADER)
+    url = ARCHIVE_BASE_URL + place.name.lower() + "/" + day.strftime("%d-%m-%Y")
+    print(url)
+    f = requests.get(url, headers=HEADER)
     soup = BeautifulSoup(f.content, 'lxml')
     trends_name = [name.get_text() for name in soup.select("span#en_volume_b div.table_bb span.table_bbk")]
+    print(soup.select("span#en_volume_b div.table_bb span.table_bbk"))
     trends_tweet_count = [name.get_text() for name in soup.select("span#en_volume_b div.table_bbv span.table_bbiv")]
+    return [{'name': trends_name[index], 'count': trends_tweet_count[index]} for index in range(len(trends_name))]
