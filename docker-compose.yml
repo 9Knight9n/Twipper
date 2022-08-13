@@ -37,13 +37,29 @@ services:
         restart: unless-stopped
 
 
-    adminer:
-        image: adminer:4.8.1-standalone
-        restart: always
+    pgadmin:
+        image: dpage/pgadmin4:latest
+        environment:
+            PGADMIN_DEFAULT_EMAIL: 'admin@mail.com'
+            PGADMIN_DEFAULT_PASSWORD: 'admin'
+            PGADMIN_CONFIG_SERVER_MODE: 'False'
+        volumes:
+            - pgadmin_volume:/var/lib/pgadmin
+            - ./docker/postgresql/backup:/tmp/backup
+        ports:
+            - "8080:80"
+        restart: unless-stopped
         depends_on:
             - db
-        ports:
-            - "8080:8080"
+
+
+#    adminer:
+#        image: adminer:4.8.1-standalone
+#        restart: always
+#        depends_on:
+#            - db
+#        ports:
+#            - "8080:8080"
 
 
 #    phpmyadmin:
@@ -76,4 +92,5 @@ volumes:
     static_volume:
     media_volume:
     data_volume:
+    pgadmin_volume:
     npm_node_modules:
