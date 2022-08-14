@@ -15,6 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app
 EXPOSE 8000
 
+RUN python ./scripts/PreRun.py
+
 RUN echo 'alias pmmm="python manage.py makemigrations"' >> ~/.bashrc
 RUN echo 'alias pmm="python manage.py migrate"' >> ~/.bashrc
 RUN echo 'alias pmf="python manage.py flush"' >> ~/.bashrc

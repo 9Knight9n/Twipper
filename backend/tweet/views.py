@@ -413,9 +413,6 @@ def scripts(request):
     # date_ = date(2022, 8, 10)
     # print(save_all_trends_by_place(Place.objects.get(name='united-states')))
     # print(save_trends_by_date_and_place(Place.objects.get(name='united-states'),date_))
-    # nltk.download('stopwords')
-    # nltk.download('wordnet')
-    # nltk.download('omw-1.4')
     trends = {}
     trend_text = extract_trend_tweets(Trend.objects.get(name='Nuclear'),10)
     file = open(LDA_SAVE_LOCATION, 'rb')
