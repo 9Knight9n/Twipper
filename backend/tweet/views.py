@@ -251,7 +251,7 @@ def get_user_LDA_chart1_by_id(request, user_id,interval):
             if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
                 tweets_in_interval.append(tweet)
 
-        top_trends = lda_model.extract_trends([tweet['content'] for tweet in tweets_in_interval])
+        top_trends = lda_model.extract_topics([tweet['content'] for tweet in tweets_in_interval])
         top_trends = percentage_results(top_trends, 8)
         for i in range(8):
             if i not in top_trends.keys():
@@ -306,7 +306,7 @@ def get_user_LDA_chart2_by_id(request, user_id,interval):
         for tweet in tweets:
             if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
                 tweets_in_interval.append(tweet)
-        top_trends = lda_model.extract_trends([tweet['content'] for tweet in tweets_in_interval])
+        top_trends = lda_model.extract_topics([tweet['content'] for tweet in tweets_in_interval])
         top_trends = percentage_results(top_trends, 8)
         for i in range(8):
             if i not in top_trends.keys():
@@ -361,7 +361,7 @@ def get_user_ARIMA_chart_by_id(request, user_id,interval):
         for tweet in tweets:
             if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
                 tweets_in_interval.append(tweet)
-        top_trends = lda_model.extract_trends([tweet['content'] for tweet in tweets_in_interval])
+        top_trends = lda_model.extract_topics([tweet['content'] for tweet in tweets_in_interval])
         top_trends = percentage_results(top_trends, 8)
         for i in range(8):
             if i not in top_trends.keys():
@@ -401,7 +401,7 @@ def scripts(request):
     # print('done creating LDA model.')
 
     # load json file and store tweets as a list
-    create_and_save_model.after_response()
+    create_and_save_model()
     # print('lda model created!')
     # trends = lda_model.extract_trends(all_tweets[100:110])
     # print(percentage_results(trends))

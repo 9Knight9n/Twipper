@@ -1,5 +1,5 @@
 import pickle
-
+import random
 import gensim.corpora as corpora
 from gensim.models.ldamodel import LdaModel
 from gensim.utils import simple_preprocess
@@ -24,7 +24,7 @@ def preprocess(text, stop_words, lemmatizer):
 
     text = [word for word in text if word not in stop_words]  # remove stopwords
     text = [word for word in text if len(word) > 2]  # remove short words
-    text = [lemmatizer.lemmatize(word) for word in text if len(word) > 1]  # lemmatize words
+    # text = [lemmatizer.lemmatize(word) for word in text if len(word) > 1]  # lemmatize words
 
     return text
 
@@ -62,15 +62,18 @@ class LDA:
                               iterations=iterations,
                               per_word_topics=True)
 
-    def extract_trends(self, tweets):
+    def extract_topics(self, tweets):
         tweets_words = [preprocess(tweet,self.stop_words,self.lemmatizer) for tweet in tweets]
+        tweet_words = []
+        for words in tweets_words:
+            tweet_words += words
         tweets_trends = []
-        for tweet_words in tweets_words:
-            new_text_corpus = self.id2word.doc2bow(tweet_words)
-            trend = self.model[new_text_corpus]
-            trend[0].sort(key=lambda a: a[1], reverse=True)
-            trend = trend[0]
-            tweets_trends.append(trend)
+
+        new_text_corpus = self.id2word.doc2bow(tweet_words)
+        trend = self.model[new_text_corpus]
+        trend[0].sort(key=lambda a: a[1], reverse=True)
+        trend = trend[0]
+        tweets_trends.append(trend)
         return tweets_trends
 
 
@@ -94,13 +97,22 @@ def percentage_results(tweets_trends, pick_first=5):
     first_items = dict(itertools.islice(percentages.items(), pick_first))
     return first_items
 
-@after_response.enable
+
 def create_and_save_model():
     print('getting all tweets...')
     tweets = Tweet.objects.all().values('content')
+    # random indexes for tweets
+    all_tweets, random_indexes = [], []
+    while len(random_indexes)<10000:
+        r = random.randint(0, len(tweets))
+        if r not in random_indexes:
+            random_indexes.append(r)
+    for i, tweet in enumerate(tweets):
+        if i in random_indexes:
+            all_tweets.append(tweet['content'])
     # create an lda class object
-    print('creating model...')
-    lda_model = LDA([tweet['content'] for tweet in tweets], 20)
+    print('creating model with', len(all_tweets), 'tweets ...')
+    lda_model = LDA(all_tweets, 8)
     print('saving model...')
     with open(LDA_SAVE_LOCATION, 'wb') as output_addr:
         pickle.dump(lda_model, output_addr, pickle.HIGHEST_PROTOCOL)
