@@ -2,10 +2,10 @@ from django.db import models
 
 
 class TwitterUser(models.Model):
-    username = models.CharField(max_length=16,unique=True)
+    username = models.CharField(max_length=16, unique=True)
     id = models.AutoField(primary_key=True)
     # twitter_id = models.IntegerField(unique=True)
-    display_name = models.CharField(max_length=50,null=True)
+    display_name = models.CharField(max_length=50, null=True)
     description = models.TextField(null=True)
     verified = models.BooleanField(null=True)
     created = models.DateField(null=True)
@@ -13,10 +13,11 @@ class TwitterUser(models.Model):
     friends_count = models.IntegerField(null=True)
     statuses_count = models.IntegerField(null=True)
     favourites_count = models.IntegerField(null=True)
-    location = models.CharField(max_length=50,null=True)
+    location = models.CharField(max_length=50, null=True)
     protected = models.BooleanField(null=True)
-    profile_image_url = models.CharField(max_length=255,null=True)
-    profile_banner_url = models.CharField(max_length=255,null=True)
+    profile_image_url = models.CharField(max_length=255, null=True)
+    profile_banner_url = models.CharField(max_length=255, null=True)
+
     # label = models.CharField(max_length=50,null=True)
 
     def __str__(self):
@@ -37,7 +38,7 @@ class FetchedInterval(models.Model):
 
 class Tweet(models.Model):
     id = models.AutoField(primary_key=True)
-    twitter_user = models.ForeignKey(TwitterUser, on_delete=models.CASCADE,related_name='twitter_user')
+    twitter_user = models.ForeignKey(TwitterUser, on_delete=models.CASCADE, related_name='twitter_user')
     twitter_id = models.BigIntegerField(unique=True)
     url = models.CharField(max_length=255)
     date = models.DateTimeField()
@@ -48,14 +49,17 @@ class Tweet(models.Model):
     quote_count = models.IntegerField()
     twitter_conversation_id = models.BigIntegerField()
     lang = models.CharField(max_length=50)
-    sourceLabel = models.CharField(max_length=255,null=True)
-    retweeted_tweet = models.ForeignKey('self', on_delete=models.SET_NULL,null=True,related_name='ref_to_retweeted_tweet')
-    quoted_tweet = models.ForeignKey('self', on_delete=models.SET_NULL,null=True,related_name='ref_to_quoted_tweet')
+    sourceLabel = models.CharField(max_length=255, null=True)
+    retweeted_tweet = models.ForeignKey('self', on_delete=models.SET_NULL, null=True,
+                                        related_name='ref_to_retweeted_tweet')
+    quoted_tweet = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, related_name='ref_to_quoted_tweet')
     tweeter_in_reply_to_tweet_id = models.BigIntegerField(null=True)
-    in_reply_to_user = models.ForeignKey(TwitterUser, on_delete=models.SET_NULL,related_name='in_reply_to_user',null=True)
+    in_reply_to_user = models.ForeignKey(TwitterUser, on_delete=models.SET_NULL, related_name='in_reply_to_user',
+                                         null=True)
     longitude = models.FloatField(null=True)
     latitude = models.FloatField(null=True)
     fetched_interval = models.ForeignKey(FetchedInterval, on_delete=models.CASCADE, related_name='fetched_interval')
+
     # place =
 
     def __str__(self):
@@ -64,9 +68,9 @@ class Tweet(models.Model):
 
 class Collection(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255,unique=True)
+    name = models.CharField(max_length=255, unique=True)
     date = models.DateField(auto_now_add=True)
-    status = models.CharField(max_length=50,default='done')
+    status = models.CharField(max_length=50, default='done')
 
     def __str__(self):
         return self.name
@@ -81,6 +85,30 @@ class CollectionTwitterUser(models.Model):
         return self.id
 
 
+class Place(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50, unique=True, null=False)
+
+    def __str__(self):
+        return self.name
 
 
+class Trend(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255, null=False)
+    topic = models.JSONField(null=True)
 
+    def __str__(self):
+        return self.name
+
+
+class TrendOccurrence(models.Model):
+    id = models.AutoField(primary_key=True)
+    trend = models.ForeignKey(Trend, on_delete=models.CASCADE, null=False)
+    date = models.DateField(null=False)
+    time = models.TimeField(null=True)
+    place = models.ForeignKey(Place, on_delete=models.CASCADE, null=False)
+    tweet_count = models.IntegerField(null=True)
+
+    def __str__(self):
+        return self.trend.name + ":" + str(self.date)

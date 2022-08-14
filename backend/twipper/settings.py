@@ -26,9 +26,12 @@ SECRET_KEY = 'django-insecure-+fs^q*$$^+_d8dfk0%)7^@1(2ihg8(67r00@=a=yt)3!#ka8-9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS=['*']
+ALLOWED_HOSTS = ['*']
 
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+]
 
 
 # Application definition
@@ -53,6 +56,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -91,10 +95,19 @@ DATABASES = {
         'CONN_MAX_AGE': 60,
         'NAME': 'TwipperDB',
         'USER': 'dbadmin',
-        'PASSWORD': '123456789',
-        'HOST': 'tcp-mo2.mogenius.io',   # Or an IP Address that your DB is hosted on
-        'PORT': '46066',
+        'PASSWORD': 'rS9ytkgUxFo9z#',
+        'HOST': 'db',   # Or an IP Address that your DB is hosted on
+        'PORT': '5432',
     }
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    #     'CONN_MAX_AGE': 60,
+    #     'NAME': 'TwipperDB',
+    #     'USER': 'dbadmin',
+    #     'PASSWORD': '123456789',
+    #     'HOST': 'tcp-mo2.mogenius.io',   # Or an IP Address that your DB is hosted on
+    #     'PORT': '46066',
+    # }
 }
 
 

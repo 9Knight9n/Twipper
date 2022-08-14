@@ -69,7 +69,7 @@ let options = {
 
 
 const TFIDFChart1 = ({userId}) => {
-  const [series, setSeries] = useState([{ data: [] }]);
+  const [series, setSeries] = useState([{ unique:0, data: [] }]);
 
   useEffect(() => {
     getSeries(moment().subtract(6, 'months').format('DD-MM-YY'),moment().format('DD-MM-YY'))
@@ -91,7 +91,7 @@ const TFIDFChart1 = ({userId}) => {
         let temp = JSON.parse(result);
         console.log(temp)
         let series = [];
-        series.push({ data: temp.data });
+        series.push({ data: temp.data, unique: temp.unique });
         setSeries(series);
       })
       .catch(error => console.log('error', error));
@@ -121,6 +121,12 @@ const TFIDFChart1 = ({userId}) => {
         type={'treemap'}
         height={385}
       />
+      <h6 className={'m-auto'} dir={'rtl'}>
+        تعداد کلمات متمایز در بازه انتخاب شده
+        {"  "+series[0].unique.toString()+"  "}
+        می باشد
+        .
+      </h6>
     </div>
   );
 };

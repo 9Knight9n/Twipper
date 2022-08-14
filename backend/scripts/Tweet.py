@@ -2,7 +2,8 @@ import snscrape.modules.twitter as sntwitter
 from datetime import datetime, timedelta
 import after_response
 
-from tweet.models import TwitterUser, FetchedInterval, Tweet, CollectionTwitterUser
+from scripts.preprocess import tweet_preprocess
+from tweet.models import TwitterUser, FetchedInterval, Tweet, CollectionTwitterUser, Trend
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION
 
 
@@ -118,3 +119,19 @@ def save_collection_tweets(collection):
     collection.status = 'done'
     collection.save()
 
+
+def extract_trend_tweets(trend:Trend,top:int):
+    tweets_list = []
+    found_all = False
+    for i, tweet in enumerate(sntwitter.TwitterSearchScraper(query='"'+trend.name+'"'+" lang:en min_retweets:100")
+                                      .get_items()):
+        tweet_text = tweet_preprocess(tweet.content)
+        if tweet_text is None:
+            continue
+        tweets_list.append(tweet_text)
+        if len(tweets_list) == top:
+            found_all = True
+            break
+    if not found_all:
+        return None
+    return tweets_list

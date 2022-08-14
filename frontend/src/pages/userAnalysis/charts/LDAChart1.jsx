@@ -6,9 +6,8 @@ import {baseURL} from "../../../components/config";
 const { Option } = Select;
 
 let options = {
-  colors : ['#C62828', '#AD1457', '#6A1B9A', '#4527A0', '#283593', '#1565C0', '#18FFFF', '#00838F', '#00695C',
-    '#2E7D32', '#558B2F', '#9E9D24', '#F9A825', '#FF8F00', '#EF6C00', '#D84315',
-    '#4E342E', '#37474F', '#4DB6AC', '#616161'],
+  colors : ['#C62828', '#AD1457','#4E342E', '#558B2F', '#4DB6AC', '#616161', '#6A1B9A','#D84315', '#4527A0', '#283593', '#1565C0', '#18FFFF', '#00838F', '#00695C',
+    '#2E7D32', '#9E9D24', '#F9A825', '#FF8F00', '#EF6C00', '#37474F','#D84315'],
   chart: {
     stacked: true,
     stackType: '100%',
@@ -137,7 +136,7 @@ const LDAChart1 = ({userId}) => {
   return (
     <div className={'d-flex flex-column'} dir={"ltr"} id="chart1">
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
-        <h6 className={'my-auto'}>نمودار فراوانی روند در هر </h6>
+        <h6 className={'my-auto'}>نمودار فراوانی موضوع در هر </h6>
         <Select
           id={'selectvalue1'}
           defaultValue="30"

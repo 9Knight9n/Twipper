@@ -1,6 +1,5 @@
 Django~=3.2.14
 psycopg2>=2.8
-psycopg2-binary
 mysqlclient
 djangorestframework
 django-cors-headers
@@ -10,3 +9,5 @@ snscrape
 nltk
 gensim
 pickle5
+beautifulsoup4
+statsmodels
