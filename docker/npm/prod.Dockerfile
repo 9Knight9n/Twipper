@@ -19,8 +19,5 @@ COPY . /app
 
 RUN npm run build
 
-#EXPOSE 3000
-
 # start app
-CMD ["serve", "-s", "build"]
-#ENTRYPOINT ["tail", "-f", "/dev/null"]
+#CMD ["serve", "-s", "build"]

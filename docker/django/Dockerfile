@@ -13,7 +13,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Now copy in our code, and run it
 COPY . /app
-EXPOSE 8000
 
 RUN python ./scripts/PreRun.py
 
