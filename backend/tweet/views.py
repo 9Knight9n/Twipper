@@ -1,5 +1,5 @@
 import pickle
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta, date
 
 import nltk
 import pytz
@@ -14,13 +14,15 @@ from scripts import TFIDFExtractor
 from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model
 from scripts.ARIMA import arima_forecast
 from scripts.User import get_user_by_username
-from scripts.Tweet import get_user_tweets, save_collection_tweets
-from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet
+from scripts.Tweet import get_user_tweets, save_collection_tweets, extract_trend_tweets
+from scripts.Trend.Trend import save_places, save_trends_by_date_and_place, save_all_trends_by_place
+from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet, Place, Trend
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_LOCATION
 
 
 def index(request):
-    return HttpResponse("Hello, world. You're at the polls index.")
+    return HttpResponse("Hello, world. You're at the twipper index.")
+
 
 class CollectionApiView(APIView):
     # add permission to check if user is authenticated
@@ -273,7 +275,6 @@ def get_user_LDA_chart1_by_id(request, user_id,interval):
     return JsonResponse({'data':[{'name':str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
 
 
-
 def get_user_LDA_chart2_by_id(request, user_id,interval):
     tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date','content')
     intervals = []
@@ -326,7 +327,6 @@ def get_user_LDA_chart2_by_id(request, user_id,interval):
                     break
 
     return JsonResponse({'data':[{'name':str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
-
 
 
 def get_user_ARIMA_chart_by_id(request, user_id,interval):
@@ -388,7 +388,6 @@ def get_user_ARIMA_chart_by_id(request, user_id,interval):
                         status=status.HTTP_200_OK)
 
 
-
 def scripts(request):
     # print('getting all tweets...')
     # tweets = Tweet.objects.all().values('content')
@@ -401,7 +400,7 @@ def scripts(request):
     # print('done creating LDA model.')
 
     # load json file and store tweets as a list
-    create_and_save_model.after_response()
+    # create_and_save_model.after_response()
     # print('lda model created!')
     # trends = lda_model.extract_trends(all_tweets[100:110])
     # print(percentage_results(trends))
@@ -410,4 +409,36 @@ def scripts(request):
 
     # for item in result:
     #     print(item)
+    # save_places()
+    # date_ = date(2022, 8, 10)
+    # print(save_all_trends_by_place(Place.objects.get(name='united-states')))
+    # print(save_trends_by_date_and_place(Place.objects.get(name='united-states'),date_))
+    # nltk.download('stopwords')
+    # nltk.download('wordnet')
+    # nltk.download('omw-1.4')
+    trends = {}
+    trend_text = extract_trend_tweets(Trend.objects.get(name='Nuclear'),10)
+    file = open(LDA_SAVE_LOCATION, 'rb')
+    lda_model = pickle.load(file)
+    file.close()
+    top_trends = lda_model.extract_trends(trend_text)
+    top_trends = percentage_results(top_trends, 8)
+    print(top_trends)
+    for i in range(8):
+        if i not in top_trends.keys():
+            top_trends[i] = 0
+    THRESHOLD = 0.025
+    for i, words in lda_model.model.print_topics():
+        new_key = ''
+        topics = words.split(' + ')
+        for j, topic in enumerate(topics):
+            [n, w] = topic.split('*')
+            if float(n) >= THRESHOLD or j < 3:
+                new_key += w[1:-1] + '_'
+            else:
+                if new_key[:-1] not in trends.keys():
+                    trends[new_key[:-1]] = []
+                trends[new_key[:-1]].append(round(top_trends[i], 2))
+                break
+    print(trends)
     return HttpResponse(f"done.")

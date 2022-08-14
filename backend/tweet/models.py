@@ -96,8 +96,19 @@ class Place(models.Model):
 class Trend(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, null=False)
-    date = models.DateTimeField(null=False)
-    tweet_count = models.IntegerField(null=False)
+    topic = models.JSONField(null=True)
 
     def __str__(self):
         return self.name
+
+
+class TrendOccurrence(models.Model):
+    id = models.AutoField(primary_key=True)
+    trend = models.ForeignKey(Trend, on_delete=models.CASCADE, null=False)
+    date = models.DateField(null=False)
+    time = models.TimeField(null=True)
+    place = models.ForeignKey(Place, on_delete=models.CASCADE, null=False)
+    tweet_count = models.IntegerField(null=True)
+
+    def __str__(self):
+        return self.trend.name + ":" + str(self.date)
