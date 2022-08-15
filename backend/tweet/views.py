@@ -1,6 +1,8 @@
 import pickle
-from datetime import datetime, timedelta, date
-
+from datetime import datetime,timedelta
+from collections import Counter
+import numpy as np
+import math
 import nltk
 import pytz
 from django.forms import model_to_dict
@@ -9,22 +11,18 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import permissions
-import after_response
 
 from scripts import TFIDFExtractor
 from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model
-from scripts.ARIMA import arima_forecast
-from scripts.Trend.TrendPrediction import get_data_by_date, train
+from scripts.ARIMA import arima_forecast, find_best_arima
 from scripts.User import get_user_by_username
-from scripts.Tweet import get_user_tweets, save_collection_tweets, extract_trend_tweets
-from scripts.Trend.Trend import save_places, save_trends_by_date_and_place, save_all_trends_by_place, save_trends_topic
-from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet, Place, Trend
+from scripts.Tweet import get_user_tweets, save_collection_tweets
+from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_LOCATION
 
 
 def index(request):
-    return HttpResponse("Hello, world. You're at the twipper index.")
-
+    return HttpResponse("Hello, world. You're at the polls index.")
 
 class CollectionApiView(APIView):
     # add permission to check if user is authenticated
@@ -224,22 +222,28 @@ def get_user_TF_chart1_by_id(request, user_id, start_date, stop_date):
     return JsonResponse({'data':data}, status=status.HTTP_200_OK)
 
 
-def get_user_LDA_chart1_by_id(request, user_id,interval):
-    tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date','content')
+def get_user_topics(user_id, interval, THRESHOLD = 0.02):
+    if user_id is None:
+        tweets = Tweet.objects.filter().values('date', 'content')
+        date = Tweet.objects.filter().order_by('-date')
+    else:
+        tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date', 'content')
+        date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
+    'got tweets!'
     intervals = []
-    date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
     if date.count() == 0:
-        return JsonResponse({'data':[]}, status=status.HTTP_200_OK)
+        return JsonResponse({'data': []}, status=status.HTTP_200_OK)
+
     date = date[0].date
     OLDEST_TWEET_DATE_NATIVE = OLDEST_TWEET_DATE.replace(tzinfo=pytz.UTC)
     while date >= OLDEST_TWEET_DATE_NATIVE:
         new_date = date - timedelta(days=interval)
-        mid_date = date - timedelta(days=interval)/2
+        mid_date = date - timedelta(days=interval) / 2
         intervals.append(
             {
-                'x':mid_date.strftime('%d %b'),
-                'z':date.strftime('%d %b')+new_date.strftime(' - %d %b'),
-                'range':(new_date,date),
+                'x': mid_date.strftime('%d %b'),
+                'z': date.strftime('%d %b') + new_date.strftime(' - %d %b'),
+                'range': (new_date, date),
                 # 'y':0
             }
         )
@@ -249,175 +253,113 @@ def get_user_LDA_chart1_by_id(request, user_id,interval):
     file.close()
 
     trends = {}
+    intervals.reverse()
     for interval_item in intervals:
         tweets_in_interval = []
         for tweet in tweets:
             if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
                 tweets_in_interval.append(tweet)
-
         top_trends = lda_model.extract_topics([tweet['content'] for tweet in tweets_in_interval])
         top_trends = percentage_results(top_trends, 8)
         for i in range(8):
             if i not in top_trends.keys():
-                top_trends[i]= 0
-        THRESHOLD = 0.025
+                top_trends[i] = 0
+
         for i, words in lda_model.model.print_topics():
             new_key = ''
             topics = words.split(' + ')
-            for j,topic in enumerate(topics):
+            for j, topic in enumerate(topics):
                 [n, w] = topic.split('*')
-                if float(n) >= THRESHOLD or j<3:
+                if float(n) >= THRESHOLD or j < 3:
                     new_key += w[1:-1] + '_'
                 else:
                     if new_key[:-1] not in trends.keys():
                         trends[new_key[:-1]] = []
-                    trends[new_key[:-1]].append(round(top_trends[i],2))
+                    trends[new_key[:-1]].append(round(top_trends[i], 2))
                     break
 
-    return JsonResponse({'data':[{'name':str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
+    return trends
+
+
+def get_user_LDA_chart1_by_id(request, user_id,interval):
+    topics = get_user_topics(user_id, interval)
+    for key in topics.keys():
+        topics[key].reverse()
+    return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()]}, status=status.HTTP_200_OK)
+
+
+def entropy(numbers):
+    s = sum(numbers)
+    if s>0:
+        probabilities = [n/s for n in numbers]
+    else:
+        probabilities = [0] * len(numbers)
+    etp = 0
+    for p in probabilities:
+        try:
+            etp -= (p*math.log2(p))
+        except:
+            continue
+    return etp
 
 
 def get_user_LDA_chart2_by_id(request, user_id,interval):
-    tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date','content')
-    intervals = []
-    date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
-    if date.count() == 0:
-        return JsonResponse({'data':[]}, status=status.HTTP_200_OK)
-
-    date = date[0].date
-    OLDEST_TWEET_DATE_NATIVE = OLDEST_TWEET_DATE.replace(tzinfo=pytz.UTC)
-    while date >= OLDEST_TWEET_DATE_NATIVE:
-        new_date = date - timedelta(days=interval)
-        mid_date = date - timedelta(days=interval)/2
-        intervals.append(
-            {
-                'x':mid_date.strftime('%d %b'),
-                'z':date.strftime('%d %b')+new_date.strftime(' - %d %b'),
-                'range':(new_date,date),
-                # 'y':0
-            }
-        )
-        date = new_date
-    file = open(LDA_SAVE_LOCATION, 'rb')
-    lda_model = pickle.load(file)
-    file.close()
-
-    trends = {}
-    intervals.reverse()
-    for interval_item in intervals:
-        tweets_in_interval = []
-        for tweet in tweets:
-            if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
-                tweets_in_interval.append(tweet)
-        top_trends = lda_model.extract_topics([tweet['content'] for tweet in tweets_in_interval])
-        top_trends = percentage_results(top_trends, 8)
-        for i in range(8):
-            if i not in top_trends.keys():
-                top_trends[i]= 0
-        THRESHOLD = 0.025
-        for i, words in lda_model.model.print_topics():
-            new_key = ''
-            topics = words.split(' + ')
-            for j,topic in enumerate(topics):
-                [n, w] = topic.split('*')
-                if float(n) >= THRESHOLD or j<3:
-                    new_key += w[1:-1] + '_'
-                else:
-                    if new_key[:-1] not in trends.keys():
-                        trends[new_key[:-1]] = []
-                    trends[new_key[:-1]].append(round(top_trends[i],2))
-                    break
-
-    return JsonResponse({'data':[{'name':str(key),'data':trends[key]} for key in trends.keys()]}, status=status.HTTP_200_OK)
-
-
-def get_user_ARIMA_chart_by_id(request, user_id,interval):
-    tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date','content')
-    intervals = []
-    date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
-    if date.count() == 0:
-        return JsonResponse({'data':[]}, status=status.HTTP_200_OK)
-
-    date = date[0].date
-    OLDEST_TWEET_DATE_NATIVE = OLDEST_TWEET_DATE.replace(tzinfo=pytz.UTC)
-    while date >= OLDEST_TWEET_DATE_NATIVE:
-        new_date = date - timedelta(days=interval)
-        mid_date = date - timedelta(days=interval)/2
-        intervals.append(
-            {
-                'x':mid_date.strftime('%d %b'),
-                'z':date.strftime('%d %b')+new_date.strftime(' - %d %b'),
-                'range':(new_date,date),
-                # 'y':0
-            }
-        )
-        date = new_date
-    file = open(LDA_SAVE_LOCATION, 'rb')
-    lda_model = pickle.load(file)
-    file.close()
-
-    trends = {}
-    intervals.reverse()
-    for interval_item in intervals:
-        tweets_in_interval = []
-        for tweet in tweets:
-            if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
-                tweets_in_interval.append(tweet)
-        top_trends = lda_model.extract_topics([tweet['content'] for tweet in tweets_in_interval])
-        top_trends = percentage_results(top_trends, 8)
-        for i in range(8):
-            if i not in top_trends.keys():
-                top_trends[i]= 0
-        THRESHOLD = 0.025
-        for i, words in lda_model.model.print_topics():
-            new_key = ''
-            topics = words.split(' + ')
-            for j,topic in enumerate(topics):
-                [n, w] = topic.split('*')
-                if float(n) >= THRESHOLD or j<3:
-                    new_key += w[1:-1] + '_'
-                else:
-                    if new_key[:-1] not in trends.keys():
-                        trends[new_key[:-1]] = []
-                    trends[new_key[:-1]].append(round(top_trends[i],2))
-                    break
-
-    trends, important_topics = arima_forecast(trends, forecast_intervals=8)
-    important_topics = important_topics[0].split('_') + important_topics[1].split('_')
-    important_topics = ' '.join(important_topics)
-    return JsonResponse({'data':[{'name':str(key),'data':trends[key]} for key in trends.keys()],
-                         'important_topics': important_topics},
+    topics = get_user_topics(user_id, interval)
+    intervals_number = len(list(topics.values())[0])
+    numbers = []
+    for i in range(intervals_number):
+        temp = [value[i] for value in topics.values()]
+        numbers.append(temp.index(max(temp)))
+    numbers = list(dict(Counter(numbers)).values())
+    data_entropy = round(entropy(numbers),2)
+    return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
+                         'entropy': data_entropy},
                         status=status.HTTP_200_OK)
 
 
+
+def get_user_ARIMA_chart_by_id(request, user_id,interval):
+    topics = get_user_topics(user_id, interval)
+    print('got topics!')
+    topics, important_topics, train_loss, val_loss = arima_forecast(topics, forecast_intervals=4)
+    return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
+                         'important_topics': important_topics,
+                         'train_loss':round(np.average(train_loss),2),
+                         'val_loss': round(np.average(val_loss),2)},
+                         status=status.HTTP_200_OK)
+
+
+def topics_stability(topics):
+    stabilities = []
+    for key, value in topics.items():
+        s = 0
+        for i in range(1, len(value)):
+            avg = np.average(value[:i])
+            s += abs(value[i] - avg)
+        stabilities.append({'name':key, 'stability': round(s,2)})
+    return stabilities
+
+
+def get_collection_ARIMA_chart(request,interval):
+    topics = get_user_topics(None, interval)
+    print('got topics!')
+    stabilities = topics_stability(topics)
+    trends, important_topics, train_loss, val_loss = arima_forecast(topics, forecast_intervals=4)
+    trends = ''
+    return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
+                        'important_topics': important_topics,
+                        'stabilities': stabilities,
+                        'trends': trends,
+                         'train_loss': round(np.average(train_loss),2),
+                         'val_loss': round(np.average(val_loss),2)},
+                        status=status.HTTP_200_OK)
+
+
+
 def scripts(request):
-    # print('getting all tweets...')
-    # tweets = Tweet.objects.all().values('content')
-    # # create an lda class object
-    # print('creating model...')
-    # lda_model = LDA([tweet['content'] for tweet in tweets], 20)
-    # print('saving model...')
-    # with open(LDA_SAVE_LOCATION, 'wb') as output_addr:
-    #     pickle.dump(lda_model, output_addr, pickle.HIGHEST_PROTOCOL)
-    # print('done creating LDA model.')
-
-    # load json file and store tweets as a list
-    # create_and_save_model.after_response()
     # create_and_save_model()
-    # print('lda model created!')
-    # trends = lda_model.extract_trends(all_tweets[100:110])
-    # print(percentage_results(trends))
-    # user = get_user_by_username('thekarami')
-    # result = get_user_tweets(user)
 
-    # for item in result:
-    #     print(item)
-    # save_places()
-    # date_ = date(2022, 8, 10)
-    # print(save_all_trends_by_place(Place.objects.get(name='united-states')))
-    # print(save_trends_by_date_and_place(Place.objects.get(name='united-states'),date_))
-    save_trends_topic()
-    # print(get_data_by_date(datetime.now()-timedelta(days=3)))
-    # train()
-    # print(trends)
+    # topics = get_user_topics(None, 7)
+    # find_best_arima(topics, forecast_intervals=4)
+
     return HttpResponse(f"done.")

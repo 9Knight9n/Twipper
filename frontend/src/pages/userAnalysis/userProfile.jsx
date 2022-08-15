@@ -10,6 +10,7 @@ import TFIDFChart1 from "./charts/TFIDFChart1";
 import LDAChart1 from "./charts/LDAChart1";
 import LDAChart2 from "./charts/LDAChart2";
 import ARIMAChart from "./charts/ARIMAChart";
+import CollectionARIMAChart from "./charts/CollectionARIMAChart";
 
 const { Panel } = Collapse;
 
@@ -99,6 +100,11 @@ function UserProfile({selectedUserId}) {
         <Panel header="تحلیل موضوعات با ARIMA" key="6">
             <div className="row">
                <div className="col-lg-12 col-md-12"><ARIMAChart userId={selectedUserId}/></div>
+            </div>
+        </Panel>
+        <Panel header="پیشبینی trend با ARIMA" key="7">
+            <div className="row">
+               <div className="col-lg-12 col-md-12"><CollectionARIMAChart userId={selectedUserId}/></div>
             </div>
         </Panel>
         {/*<div className="ant-descriptions-title" style={{marginBottom: '20px'}}></div>*/}

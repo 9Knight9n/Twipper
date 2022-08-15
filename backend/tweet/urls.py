@@ -27,6 +27,7 @@ urlpatterns = [
     path('get_user_LDA_chart1_by_id/<int:user_id>/<int:interval>/', views.get_user_LDA_chart1_by_id, name='get_user_LDA_chart1_by_id'),
     path('get_user_LDA_chart2_by_id/<int:user_id>/<int:interval>/', views.get_user_LDA_chart2_by_id,name='get_user_LDA_chart2_by_id'),
     path('get_user_ARIMA_chart_by_id/<int:user_id>/<int:interval>/', views.get_user_ARIMA_chart_by_id,name='get_user_ARIMA_chart_by_id'),
+    path('get_collection_ARIMA_chart/<int:interval>/', views.get_collection_ARIMA_chart,name='get_collection_ARIMA_chart'),
 
     path('scripts/', views.scripts, name='scripts'),
 ]
