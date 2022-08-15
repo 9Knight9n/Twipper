@@ -357,7 +357,7 @@ def get_collection_ARIMA_chart(request,interval):
 
 
 def scripts(request):
-    # create_and_save_model()
+    create_and_save_model()
 
     # topics = get_user_topics(None, 7)
     # find_best_arima(topics, forecast_intervals=4)

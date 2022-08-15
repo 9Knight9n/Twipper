@@ -102,14 +102,15 @@ def create_and_save_model():
     print('getting all tweets...')
     tweets = Tweet.objects.all().values('content')
     # random indexes for tweets
-    all_tweets, random_indexes = [], []
-    while len(random_indexes)<10000:
-        r = random.randint(0, len(tweets))
-        if r not in random_indexes:
-            random_indexes.append(r)
-    for i, tweet in enumerate(tweets):
-        if i in random_indexes:
-            all_tweets.append(tweet['content'])
+    # all_tweets, random_indexes = [], []
+    # while len(random_indexes)<10000:
+    #     r = random.randint(0, len(tweets))
+    #     if r not in random_indexes:
+    #         random_indexes.append(r)
+    # for i, tweet in enumerate(tweets):
+    #     if i in random_indexes:
+    #         all_tweets.append(tweet['content'])
+    all_tweets = [tweet['content'] for tweet in tweets]
     # create an lda class object
     print('creating model with', len(all_tweets), 'tweets ...')
     lda_model = LDA(all_tweets, 8)
