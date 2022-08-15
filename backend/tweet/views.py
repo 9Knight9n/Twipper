@@ -229,7 +229,7 @@ def get_user_topics(user_id, interval, THRESHOLD = 0.02):
     else:
         tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date', 'content')
         date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
-
+    'got tweets!'
     intervals = []
     if date.count() == 0:
         return JsonResponse({'data': []}, status=status.HTTP_200_OK)
@@ -320,6 +320,7 @@ def get_user_LDA_chart2_by_id(request, user_id,interval):
 
 def get_user_ARIMA_chart_by_id(request, user_id,interval):
     topics = get_user_topics(user_id, interval)
+    print('got topics!')
     topics, important_topics, train_loss, val_loss = arima_forecast(topics, forecast_intervals=4)
     return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
                          'important_topics': important_topics,
@@ -341,6 +342,7 @@ def topics_stability(topics):
 
 def get_collection_ARIMA_chart(request,interval):
     topics = get_user_topics(None, interval)
+    print('got topics!')
     stabilities = topics_stability(topics)
     trends, important_topics, train_loss, val_loss = arima_forecast(topics, forecast_intervals=4)
     trends = ''
@@ -357,7 +359,7 @@ def get_collection_ARIMA_chart(request,interval):
 def scripts(request):
     # create_and_save_model()
 
-    topics = get_user_topics(None, interval)
-    find_best_arima(topics, forecast_intervals=4)
+    # topics = get_user_topics(None, 7)
+    # find_best_arima(topics, forecast_intervals=4)
 
     return HttpResponse(f"done.")

@@ -90,24 +90,24 @@ WSGI_APPLICATION = 'twipper.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'CONN_MAX_AGE': 60,
-        'NAME': 'TwipperDB',
-        'USER': 'dbadmin',
-        'PASSWORD': '123456789',
-        'HOST': 'db',   # Or an IP Address that your DB is hosted on
-        'PORT': '3306',
-    }
     # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    #     'ENGINE': 'django.db.backends.mysql',
     #     'CONN_MAX_AGE': 60,
     #     'NAME': 'TwipperDB',
     #     'USER': 'dbadmin',
     #     'PASSWORD': '123456789',
-    #     'HOST': 'tcp-mo2.mogenius.io',   # Or an IP Address that your DB is hosted on
-    #     'PORT': '46066',
+    #     'HOST': 'db',   # Or an IP Address that your DB is hosted on
+    #     'PORT': '3306',
     # }
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'CONN_MAX_AGE': 60,
+        'NAME': 'TwipperDB',
+        'USER': 'dbadmin',
+        'PASSWORD': '123456789',
+        'HOST': 'tcp-mo2.mogenius.io',   # Or an IP Address that your DB is hosted on
+        'PORT': '46066',
+    }
 }
 
 

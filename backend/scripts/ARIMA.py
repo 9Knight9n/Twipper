@@ -22,7 +22,7 @@ def mean_abstract_error(a, b):
     return s/l
 
 
-def arima_forecast(trends_time_series, forecast_intervals, p=3, q=3):
+def arima_forecast(trends_time_series, forecast_intervals, p=4, q=3):
     df = pd.DataFrame(trends_time_series)
     important_topics, train_loss, val_loss = [], [], []
     for c in df.columns:
@@ -56,8 +56,8 @@ def find_best_arima(trends_time_series, forecast_intervals):
     min_train = 10000
     min_val = 10000
     print('start to find best arima:')
-    for p in range(10):
-        for q in range(10):
+    for p in range(5):
+        for q in range(5):
             df = pd.DataFrame(trends_time_series)
             important_topics, train_loss, val_loss = [], [], []
             for c in df.columns:
@@ -81,7 +81,7 @@ def find_best_arima(trends_time_series, forecast_intervals):
             if min_train>np.average(train_loss):
                 min_pq_train = (p,q)
                 min_train = np.average(train_loss)
-            print(results[str(p)+','+str(q)])
+            print('for',p,q,': ',results[str(p)+','+str(q)])
 
     print('best for train:', min_pq_train)
     print('best for val:', min_pq_val)
