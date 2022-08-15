@@ -14,7 +14,7 @@ from rest_framework import permissions
 
 from scripts import TFIDFExtractor
 from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model
-from scripts.ARIMA import arima_forecast
+from scripts.ARIMA import arima_forecast, find_best_arima
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets
 from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet
@@ -222,7 +222,7 @@ def get_user_TF_chart1_by_id(request, user_id, start_date, stop_date):
     return JsonResponse({'data':data}, status=status.HTTP_200_OK)
 
 
-def get_user_topics(user_id, interval):
+def get_user_topics(user_id, interval, THRESHOLD = 0.02):
     if user_id is None:
         tweets = Tweet.objects.filter().values('date', 'content')
         date = Tweet.objects.filter().order_by('-date')
@@ -264,7 +264,7 @@ def get_user_topics(user_id, interval):
         for i in range(8):
             if i not in top_trends.keys():
                 top_trends[i] = 0
-        THRESHOLD = 0.025
+
         for i, words in lda_model.model.print_topics():
             new_key = ''
             topics = words.split(' + ')
@@ -320,42 +320,44 @@ def get_user_LDA_chart2_by_id(request, user_id,interval):
 
 def get_user_ARIMA_chart_by_id(request, user_id,interval):
     topics = get_user_topics(user_id, interval)
-
-    topics, important_topics = arima_forecast(topics, forecast_intervals=4)
-    important_topics = important_topics[0].split('_') + important_topics[1].split('_')
-    important_topics = ' '.join(important_topics)
+    topics, important_topics, train_loss, val_loss = arima_forecast(topics, forecast_intervals=4)
     return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
-                         'important_topics': important_topics},
-                        status=status.HTTP_200_OK)
+                         'important_topics': important_topics,
+                         'train_loss':round(np.average(train_loss),2),
+                         'val_loss': round(np.average(val_loss),2)},
+                         status=status.HTTP_200_OK)
 
 
 def topics_stability(topics):
-    stabilities = {}
+    stabilities = []
     for key, value in topics.items():
         s = 0
         for i in range(1, len(value)):
             avg = np.average(value[:i])
             s += abs(value[i] - avg)
-        stabilities[key] = round(s,2)
+        stabilities.append({'name':key, 'stability': round(s,2)})
     return stabilities
 
 
 def get_collection_ARIMA_chart(request,interval):
     topics = get_user_topics(None, interval)
     stabilities = topics_stability(topics)
-    trends, important_topics = arima_forecast(topics, forecast_intervals=4)
-    important_topics = important_topics[0].split('_') + important_topics[1].split('_')
-    important_topics = ' '.join(important_topics)
+    trends, important_topics, train_loss, val_loss = arima_forecast(topics, forecast_intervals=4)
     trends = ''
     return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
                         'important_topics': important_topics,
                         'stabilities': stabilities,
-                        'trends': trends},
+                        'trends': trends,
+                         'train_loss': round(np.average(train_loss),2),
+                         'val_loss': round(np.average(val_loss),2)},
                         status=status.HTTP_200_OK)
 
 
 
 def scripts(request):
-    create_and_save_model()
+    # create_and_save_model()
+
+    topics = get_user_topics(None, interval)
+    find_best_arima(topics, forecast_intervals=4)
 
     return HttpResponse(f"done.")

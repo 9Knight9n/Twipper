@@ -85,7 +85,7 @@ let options = {
     },
   },
   forecastDataPoints: {
-    count: 4
+    count: 8
   },
 };
 
@@ -95,6 +95,8 @@ const CollectionARIMAChart = ({userId}) => {
   const [stabilities, setStabilities] = useState([]);
   const [trends, setTrends] = useState([]);
   const [topics, setTopics] = useState([]);
+  const [trainLoss, setTrainLoss] = useState(0);
+  const [valLoss, setValLoss] = useState(0);
   useEffect(() => {
     getSeries(7)
   }, []);
@@ -117,6 +119,8 @@ const CollectionARIMAChart = ({userId}) => {
         setStabilities(temp.stabilities);
         setTopics(temp.important_topics);
         setTrends(temp.trends);
+        setTrainLoss(temp.train_loss);
+        setValLoss(temp.val_loss);
       })
       .catch(error => console.log('error', error));
 
@@ -129,16 +133,26 @@ const CollectionARIMAChart = ({userId}) => {
   return (
     <div className={'d-flex flex-column'} dir={"ltr"} id="chart1">
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
-        <span>{stabilities}</span>
+        <h5 className={'my-auto'}>پایداری موضوعات: </h5>
       </div>
+      {
+        stabilities.map((s) => (
+            <div className={'d-flex flex-row mx-auto'}>
+              <h6 className={'my-auto'}>{s.name}:{s.stability}</h6>
+            </div>
+        ))
+      }
+      <br/>
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
-        <h6 className={'my-auto'}>کلمات احتمالی ترند: </h6>
+        <h5 className={'my-auto'}>کلمات احتمالی ترند: </h5>
         <span>{topics}</span>
       </div>
+      <br/>
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
-        <h6 className={'my-auto'}>کلمات ترند اصلی: </h6>
+        <h5 className={'my-auto'}>کلمات ترند اصلی: </h5>
         <span>{trends}</span>
       </div>
+      <br/>
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
         <h6 className={'my-auto'}>نمودار فراوانی موضوعات در هر </h6>
         <Select
@@ -157,6 +171,13 @@ const CollectionARIMAChart = ({userId}) => {
         height={600}
         // xaxis={}
       />
+      <br/>
+      <div className={'d-flex flex-row mx-auto'}>
+        <h5 className={'my-auto'}>train mean abstract error:{trainLoss}</h5>
+      </div>
+      <div className={'d-flex flex-row mx-auto'}>
+        <h5 className={'my-auto'}>validation mean abstract error:{valLoss}</h5>
+      </div>
     </div>
   );
 };

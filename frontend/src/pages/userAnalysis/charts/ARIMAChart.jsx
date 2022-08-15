@@ -85,14 +85,16 @@ let options = {
     },
   },
   forecastDataPoints: {
-    count: 4
+    count: 8
   },
 };
 
 
 const ARIMAChart = ({userId}) => {
   const [series, setSeries] = useState([{ name: "موضوع ", data: [] }]);
-  const [topics, setTopics] = useState([])
+  const [topics, setTopics] = useState([]);
+  const [trainLoss, setTrainLoss] = useState(0);
+  const [valLoss, setValLoss] = useState(0);
   useEffect(() => {
     getSeries(7)
   }, []);
@@ -112,7 +114,9 @@ const ARIMAChart = ({userId}) => {
         // let series = [];
         // series.push({ data: temp.data });
         setSeries(temp.data);
-        setTopics(temp.important_topics)
+        setTopics(temp.important_topics);
+        setTrainLoss(temp.train_loss);
+        setValLoss(temp.val_loss);
       })
       .catch(error => console.log('error', error));
 
@@ -128,10 +132,11 @@ const ARIMAChart = ({userId}) => {
         <h6 className={'my-auto'}>کلمات مهم در 2 ماه آینده: </h6>
         <span>{topics}</span>
       </div>
+      <br/>
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
         <h6 className={'my-auto'}>نمودار فراوانی موضوعات در هر </h6>
         <Select
-          id={'selectvalue3'}
+          id={'selectvalue4'}
           defaultValue="7"
           bordered={false}
           onChange={handleChange}
@@ -146,6 +151,13 @@ const ARIMAChart = ({userId}) => {
         height={600}
         // xaxis={}
       />
+      <br/>
+      <div className={'d-flex flex-row mx-auto'}>
+        <h5 className={'my-auto'}>train mean abstract error:{trainLoss}</h5>
+      </div>
+      <div className={'d-flex flex-row mx-auto'}>
+        <h5 className={'my-auto'}>validation mean abstract error:{valLoss}</h5>
+      </div>
     </div>
   );
 };
