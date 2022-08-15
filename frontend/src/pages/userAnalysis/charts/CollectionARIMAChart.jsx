@@ -85,14 +85,16 @@ let options = {
     },
   },
   forecastDataPoints: {
-    count: 8
+    count: 4
   },
 };
 
 
-const ARIMAChart = ({userId}) => {
+const CollectionARIMAChart = ({userId}) => {
   const [series, setSeries] = useState([{ name: "موضوع ", data: [] }]);
-  const [topics, setTopics] = useState([])
+  const [stabilities, setStabilities] = useState([]);
+  const [trends, setTrends] = useState([]);
+  const [topics, setTopics] = useState([]);
   useEffect(() => {
     getSeries(7)
   }, []);
@@ -112,7 +114,9 @@ const ARIMAChart = ({userId}) => {
         // let series = [];
         // series.push({ data: temp.data });
         setSeries(temp.data);
-        setTopics(temp.important_topics)
+        setStabilities(temp.stabilities);
+        setTopics(temp.important_topics);
+        setTrends(temp.trends);
       })
       .catch(error => console.log('error', error));
 
@@ -125,8 +129,15 @@ const ARIMAChart = ({userId}) => {
   return (
     <div className={'d-flex flex-column'} dir={"ltr"} id="chart1">
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
-        <h6 className={'my-auto'}>کلمات مهم در 2 ماه آینده: </h6>
+        <span>{stabilities}</span>
+      </div>
+      <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
+        <h6 className={'my-auto'}>کلمات احتمالی ترند: </h6>
         <span>{topics}</span>
+      </div>
+      <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
+        <h6 className={'my-auto'}>کلمات ترند اصلی: </h6>
+        <span>{trends}</span>
       </div>
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
         <h6 className={'my-auto'}>نمودار فراوانی موضوعات در هر </h6>
@@ -150,4 +161,4 @@ const ARIMAChart = ({userId}) => {
   );
 };
 
-export default ARIMAChart;
+export default CollectionARIMAChart;

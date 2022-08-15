@@ -85,7 +85,7 @@ let options = {
     },
   },
   forecastDataPoints: {
-    count: 8
+    count: 4
   },
 };
 

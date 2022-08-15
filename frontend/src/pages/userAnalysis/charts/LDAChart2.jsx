@@ -89,6 +89,7 @@ let options = {
 
 const LDAChart2 = ({userId}) => {
   const [series, setSeries] = useState([{ name: "موضوع ", data: [] }]);
+  const [entropy, setEntropy] = useState('');
 
   useEffect(() => {
     getSeries(30)
@@ -109,6 +110,7 @@ const LDAChart2 = ({userId}) => {
         // let series = [];
         // series.push({ data: temp.data });
         setSeries(temp.data);
+        setEntropy(temp.entropy);
       })
       .catch(error => console.log('error', error));
 
@@ -120,6 +122,10 @@ const LDAChart2 = ({userId}) => {
 
   return (
     <div className={'d-flex flex-column'} dir={"ltr"} id="chart1">
+      <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
+        <h6 className={'my-auto'}>آنتروپی موضوعات کاربر: </h6>
+        <span>{entropy}</span>
+      </div>
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
         <h6 className={'my-auto'}>نمودار فراوانی موضوع در هر </h6>
         <Select

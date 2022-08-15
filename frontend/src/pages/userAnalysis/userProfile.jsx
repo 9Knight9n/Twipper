@@ -102,7 +102,7 @@ function UserProfile({selectedUserId}) {
                <div className="col-lg-12 col-md-12"><ARIMAChart userId={selectedUserId}/></div>
             </div>
         </Panel>
-        <Panel header="پیشبینی trend با ARIMA" key="6">
+        <Panel header="پیشبینی trend با ARIMA" key="7">
             <div className="row">
                <div className="col-lg-12 col-md-12"><CollectionARIMAChart userId={selectedUserId}/></div>
             </div>

@@ -13,7 +13,7 @@ def find_d(df_column, p_value_threshold=0.05):
     return d
 
 
-def arima_forecast(trends_time_series, forecast_intervals, p=1, q=3):
+def arima_forecast(trends_time_series, forecast_intervals, p=3, q=3):
     df = pd.DataFrame(trends_time_series)
     important_topics = []
     for c in df.columns:

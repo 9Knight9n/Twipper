@@ -1,6 +1,8 @@
 import pickle
 from datetime import datetime,timedelta
-
+from collections import Counter
+import numpy as np
+import math
 import nltk
 import pytz
 from django.forms import model_to_dict
@@ -227,7 +229,7 @@ def get_user_topics(user_id, interval):
     else:
         tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date', 'content')
         date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
-    print(len(tweets))
+
     intervals = []
     if date.count() == 0:
         return JsonResponse({'data': []}, status=status.HTTP_200_OK)
@@ -286,28 +288,69 @@ def get_user_LDA_chart1_by_id(request, user_id,interval):
     return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()]}, status=status.HTTP_200_OK)
 
 
+def entropy(numbers):
+    s = sum(numbers)
+    if s>0:
+        probabilities = [n/s for n in numbers]
+    else:
+        probabilities = [0] * len(numbers)
+    etp = 0
+    for p in probabilities:
+        try:
+            etp -= (p*math.log2(p))
+        except:
+            continue
+    return etp
+
 
 def get_user_LDA_chart2_by_id(request, user_id,interval):
     topics = get_user_topics(user_id, interval)
-    return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()]}, status=status.HTTP_200_OK)
+    intervals_number = len(list(topics.values())[0])
+    numbers = []
+    for i in range(intervals_number):
+        temp = [value[i] for value in topics.values()]
+        numbers.append(temp.index(max(temp)))
+    numbers = list(dict(Counter(numbers)).values())
+    data_entropy = round(entropy(numbers),2)
+    return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
+                         'entropy': data_entropy},
+                        status=status.HTTP_200_OK)
 
 
 
 def get_user_ARIMA_chart_by_id(request, user_id,interval):
     topics = get_user_topics(user_id, interval)
 
-    trends, important_topics = arima_forecast(topics, forecast_intervals=8)
+    topics, important_topics = arima_forecast(topics, forecast_intervals=4)
     important_topics = important_topics[0].split('_') + important_topics[1].split('_')
     important_topics = ' '.join(important_topics)
-    return JsonResponse({'data':[{'name':str(key),'data':trends[key]} for key in trends.keys()],
+    return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
                          'important_topics': important_topics},
                         status=status.HTTP_200_OK)
 
 
+def topics_stability(topics):
+    stabilities = {}
+    for key, value in topics.items():
+        s = 0
+        for i in range(1, len(value)):
+            avg = np.average(value[:i])
+            s += abs(value[i] - avg)
+        stabilities[key] = round(s,2)
+    return stabilities
+
+
 def get_collection_ARIMA_chart(request,interval):
     topics = get_user_topics(None, interval)
+    stabilities = topics_stability(topics)
+    trends, important_topics = arima_forecast(topics, forecast_intervals=4)
+    important_topics = important_topics[0].split('_') + important_topics[1].split('_')
+    important_topics = ' '.join(important_topics)
+    trends = ''
     return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
-                        'important_topics': []},
+                        'important_topics': important_topics,
+                        'stabilities': stabilities,
+                        'trends': trends},
                         status=status.HTTP_200_OK)
 
 
