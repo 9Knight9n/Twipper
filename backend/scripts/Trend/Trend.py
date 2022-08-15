@@ -1,13 +1,16 @@
 import datetime
+import pickle
 
 import requests
 from bs4 import BeautifulSoup
 
+from scripts.LDAExtractor import percentage_results
 from scripts.Trend import HEADER, ARCHIVE_BASE_URL
+from scripts.Tweet import extract_trend_tweets
 from tweet.models import Place, Trend, TrendOccurrence
 from datetime import date
 
-from twipper.config import OLDEST_TWEET_DATE
+from twipper.config import OLDEST_TWEET_DATE, LDA_SAVE_LOCATION
 
 
 def save_places():
@@ -74,4 +77,26 @@ def save_all_trends_by_place(place: Place):
         save_trends_by_date_and_place(place,day)
         day -= datetime.timedelta(days=1)
     return TrendOccurrence.objects.filter(place=place)
+
+
+def save_trends_topic():
+    trends = Trend.objects.filter(topic__isnull=True)
+    file = open(LDA_SAVE_LOCATION, 'rb')
+    lda_model = pickle.load(file)
+    file.close()
+    update_trend = []
+    bulk_limit = 50
+    for trend in trends:
+        trend_text = extract_trend_tweets(trend, 10)
+        if trend_text is None:
+            continue
+        top_trends = lda_model.extract_topics(trend_text)
+        top_trends = percentage_results(top_trends, 8)
+        trend.topic = top_trends
+        update_trend.append(trend)
+        if len(update_trend) > bulk_limit:
+            Trend.objects.bulk_update(update_trend,['topic'])
+            update_trend = []
+            print('added some')
+    Trend.objects.bulk_update(update_trend,['topic'])
 

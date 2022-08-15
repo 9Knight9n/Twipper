@@ -14,9 +14,10 @@ import after_response
 from scripts import TFIDFExtractor
 from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model
 from scripts.ARIMA import arima_forecast
+from scripts.Trend.TrendPrediction import get_data_by_date, train
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets, extract_trend_tweets
-from scripts.Trend.Trend import save_places, save_trends_by_date_and_place, save_all_trends_by_place
+from scripts.Trend.Trend import save_places, save_trends_by_date_and_place, save_all_trends_by_place, save_trends_topic
 from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet, Place, Trend
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_LOCATION
 
@@ -415,29 +416,8 @@ def scripts(request):
     # date_ = date(2022, 8, 10)
     # print(save_all_trends_by_place(Place.objects.get(name='united-states')))
     # print(save_trends_by_date_and_place(Place.objects.get(name='united-states'),date_))
-    trends = {}
-    trend_text = extract_trend_tweets(Trend.objects.get(name='Nuclear'),10)
-    file = open(LDA_SAVE_LOCATION, 'rb')
-    lda_model = pickle.load(file)
-    file.close()
-    top_trends = lda_model.extract_trends(trend_text)
-    top_trends = percentage_results(top_trends, 8)
-    print(top_trends)
-    for i in range(8):
-        if i not in top_trends.keys():
-            top_trends[i] = 0
-    THRESHOLD = 0.025
-    for i, words in lda_model.model.print_topics():
-        new_key = ''
-        topics = words.split(' + ')
-        for j, topic in enumerate(topics):
-            [n, w] = topic.split('*')
-            if float(n) >= THRESHOLD or j < 3:
-                new_key += w[1:-1] + '_'
-            else:
-                if new_key[:-1] not in trends.keys():
-                    trends[new_key[:-1]] = []
-                trends[new_key[:-1]].append(round(top_trends[i], 2))
-                break
-    print(trends)
+    # save_trends_topic()
+    # print(get_data_by_date(datetime.now()-timedelta(days=3)))
+    train()
+    # print(trends)
     return HttpResponse(f"done.")

@@ -1,0 +1,4 @@
+
+
+LDA_SIZE = 8
+TRENDS_NUMBER = 5

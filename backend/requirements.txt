@@ -11,3 +11,5 @@ gensim
 pickle5
 beautifulsoup4
 statsmodels
+keras
+tensorflow

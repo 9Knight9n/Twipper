@@ -9,3 +9,4 @@ THREAD_COUNT = 1
 BASE_PATH = Path(os.path.dirname(__file__)).parent
 
 LDA_SAVE_LOCATION = Path(BASE_PATH, 'resource','lda_model.pkl')
+KERAS_SAVE_LOCATION = Path(BASE_PATH, 'resource','checkpoint')
