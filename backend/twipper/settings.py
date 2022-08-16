@@ -32,7 +32,12 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:8080',
+    'http://localhost:9100',
+    'http://localhost:9101',
+    'http://localhost:9102',
+    'http://localhost:9103',
 ]
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
 
 # Application definition
