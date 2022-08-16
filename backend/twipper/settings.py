@@ -28,9 +28,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-CORS_ALLOWED_ORIGIN_REGEXES =[
-    r'^.+$'
-]
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = False
 
 # CORS_ALLOWED_ORIGINS = [
 #     '*',
@@ -40,7 +39,6 @@ CORS_ALLOWED_ORIGIN_REGEXES =[
 # Application definition
 
 INSTALLED_APPS = [
-    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -53,7 +51,7 @@ INSTALLED_APPS = [
 
     # other apps
     'rest_framework',
-
+    'corsheaders',
     'after_response'
 ]
 
