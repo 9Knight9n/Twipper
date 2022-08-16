@@ -40,6 +40,7 @@ CORS_ALLOWED_ORIGIN_REGEXES =[
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -52,7 +53,7 @@ INSTALLED_APPS = [
 
     # other apps
     'rest_framework',
-    'corsheaders',
+
     'after_response'
 ]
 
