@@ -112,3 +112,35 @@ class TrendOccurrence(models.Model):
 
     def __str__(self):
         return self.trend.name + ":" + str(self.date)
+
+
+class LDATopic(models.Model):
+    id = models.AutoField(primary_key = True)
+    name = models.CharField(null=False, max_length=2, unique=True)
+    words = models.CharField(null=False, max_length=255)
+
+    def __str__(self):
+        return self.name
+
+
+class UserTopic(models.Model):
+    id = models.AutoField(primary_key=True)
+    week_number = models.IntegerField()
+    topic = models.ForeignKey(LDATopic, on_delete=models.CASCADE, null=False)
+    twitter_user = models.ForeignKey(TwitterUser, on_delete=models.CASCADE)
+    value = models.FloatField(null=False, default=0)
+
+    def __str__(self):
+        return self.topic.name+ ':' + str(self.value)
+
+
+class UserTopicARIMA(models.Model):
+    id = models.AutoField(primary_key=True)
+    topic = models.ForeignKey(LDATopic, on_delete=models.CASCADE, null=False)
+    twitter_user = models.ForeignKey(TwitterUser, on_delete=models.CASCADE)
+    value = models.CharField(max_length=255,null=False, default='')
+    train_loss = models.FloatField(null=False, default=0)
+    val_loss = models.FloatField(null=False, default=0)
+
+    def __str__(self):
+        return self.topic.name+ ':' + self.value

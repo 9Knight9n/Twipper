@@ -1,5 +1,6 @@
 import pickle
 import random
+import pytz
 import gensim.corpora as corpora
 from gensim.models.ldamodel import LdaModel
 from gensim.utils import simple_preprocess
@@ -7,10 +8,9 @@ import re
 import nltk
 from nltk.corpus import stopwords
 import itertools
-import after_response
-
-from tweet.models import Tweet
-from twipper.config import LDA_SAVE_LOCATION
+from datetime import datetime,timedelta
+from tweet.models import Tweet, LDATopic, UserTopic, TwitterUser
+from twipper.config import LDA_SAVE_LOCATION, OLDEST_TWEET_DATE
 
 
 def preprocess(text, stop_words, lemmatizer):
@@ -118,3 +118,68 @@ def create_and_save_model():
     with open(LDA_SAVE_LOCATION, 'wb') as output_addr:
         pickle.dump(lda_model, output_addr, pickle.HIGHEST_PROTOCOL)
     print('done creating LDA model.')
+
+
+def save_topics():
+    file = open(LDA_SAVE_LOCATION, 'rb')
+    lda_model = pickle.load(file)
+    file.close()
+    topics = []
+    for i, words in lda_model.model.print_topics():
+        topics.append(LDATopic(name=str(i), words=str(words)))
+    LDATopic.objects.bulk_create(topics)
+    print('all topics saved!')
+
+
+def save_user_topics(interval):
+    print('in save user topics ...')
+    user_trends = []
+
+    file = open(LDA_SAVE_LOCATION, 'rb')
+    lda_model = pickle.load(file)
+    file.close()
+
+    twitter_users = TwitterUser.objects.all()
+    for tu in twitter_users:
+        user_id = tu.id
+        tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date', 'content')
+        date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
+
+        if date.count() == 0:
+            break
+
+        date = date[0].date
+        OLDEST_TWEET_DATE_NATIVE = OLDEST_TWEET_DATE.replace(tzinfo=pytz.UTC)
+        intervals = []
+        while date >= OLDEST_TWEET_DATE_NATIVE:
+            new_date = date - timedelta(days=interval)
+            mid_date = date - timedelta(days=interval) / 2
+            intervals.append(
+                {
+                    'x': mid_date.strftime('%d %b'),
+                    'z': date.strftime('%d %b') + new_date.strftime(' - %d %b'),
+                    'range': (new_date, date),
+                    # 'y':0
+                }
+            )
+            date = new_date
+
+        intervals.reverse()
+        for i, interval_item in enumerate(intervals):
+            tweets_in_interval = []
+            for tweet in tweets:
+                if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
+                    tweets_in_interval.append(tweet)
+            top_trends = lda_model.extract_topics([tweet['content'] for tweet in tweets_in_interval])
+            top_trends = percentage_results(top_trends, 8)
+            for j in range(8):
+                if j not in top_trends.keys():
+                    top_trends[j] = 0
+
+            for key,value in top_trends.items():
+                topic_id = LDATopic.objects.get(name=key)
+                twitter_user = TwitterUser.objects.get(id=user_id)
+                user_trends.append(UserTopic(week_number=i+1, topic=topic_id, twitter_user=twitter_user, value=round(value,2)))
+
+    UserTopic.objects.bulk_create(user_trends)
+    print('user topics saved!')

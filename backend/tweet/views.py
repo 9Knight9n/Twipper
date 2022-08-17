@@ -13,11 +13,13 @@ from rest_framework import status
 from rest_framework import permissions
 
 from scripts import TFIDFExtractor
-from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model
+from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model,\
+    save_topics, save_user_topics
 from scripts.ARIMA import arima_forecast, find_best_arima
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets
-from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet, TrendOccurrence
+from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet,\
+    TrendOccurrence, UserTopic, LDATopic, UserTopicARIMA
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_LOCATION
 
 
@@ -222,67 +224,46 @@ def get_user_TF_chart1_by_id(request, user_id, start_date, stop_date):
     return JsonResponse({'data':data}, status=status.HTTP_200_OK)
 
 
-def get_user_topics(user_id, interval, THRESHOLD = 0.02):
-    if user_id is None:
-        tweets = Tweet.objects.filter().values('date', 'content')
-        date = Tweet.objects.filter().order_by('-date')
-    else:
-        tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date', 'content')
-        date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
-    intervals = []
-    if date.count() == 0:
-        return JsonResponse({'data': []}, status=status.HTTP_200_OK)
+def get_topic_words(topics, THRESHOLD=0.02):
+    new_topics = {}
+    for key, value in topics.items():
+        topic = LDATopic.objects.get(name=key)
+        words = topic.words
+        new_key = ''
+        words_topics = words.split(' + ')
+        for j, topic in enumerate(words_topics):
+            [n, w] = topic.split('*')
+            if float(n) >= THRESHOLD or j < 3:
+                new_key += w[1:-1] + '_'
+            else:
+                break
+        new_topics[new_key[:-1]] = value
+    return new_topics
 
-    date = date[0].date
-    OLDEST_TWEET_DATE_NATIVE = OLDEST_TWEET_DATE.replace(tzinfo=pytz.UTC)
-    while date >= OLDEST_TWEET_DATE_NATIVE:
-        new_date = date - timedelta(days=interval)
-        mid_date = date - timedelta(days=interval) / 2
-        intervals.append(
-            {
-                'x': mid_date.strftime('%d %b'),
-                'z': date.strftime('%d %b') + new_date.strftime(' - %d %b'),
-                'range': (new_date, date),
-                # 'y':0
-            }
-        )
-        date = new_date
-    file = open(LDA_SAVE_LOCATION, 'rb')
-    lda_model = pickle.load(file)
-    file.close()
 
-    trends = {}
-    intervals.reverse()
-    for interval_item in intervals:
-        tweets_in_interval = []
-        for tweet in tweets:
-            if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
-                tweets_in_interval.append(tweet)
-        top_trends = lda_model.extract_topics([tweet['content'] for tweet in tweets_in_interval])
-        top_trends = percentage_results(top_trends, 8)
-        for i in range(8):
-            if i not in top_trends.keys():
-                top_trends[i] = 0
+def get_user_topics(user_id, interval):
+    user_topic = UserTopic.objects.filter(twitter_user_id=user_id).\
+        order_by('week_number', 'topic__name').values('value', 'topic__name')
+    topics = {}
+    for ut in user_topic:
+        topic_name = ut['topic__name']
+        if topic_name not in topics:
+            topics[topic_name] = []
+        topics[topic_name].append(ut['value'])
 
-        for i, words in lda_model.model.print_topics():
-            new_key = ''
-            topics = words.split(' + ')
-            for j, topic in enumerate(topics):
-                [n, w] = topic.split('*')
-                if float(n) >= THRESHOLD or j < 3:
-                    new_key += w[1:-1] + '_'
-                else:
-                    if new_key[:-1] not in trends.keys():
-                        trends[new_key[:-1]] = []
-                    trends[new_key[:-1]].append(round(top_trends[i], 2))
-                    break
+    if interval==30:
+        for key, value in topics.items():
+            temp = []
+            for i in range(0, len(value), 4):
+                temp.append(round(np.average(value[i:i+4]),2))
+            topics[key] = temp
 
-    last_date = intervals[-1]['range'][1]
-    return trends, last_date
+    return topics
 
 
 def get_user_LDA_chart1_by_id(request, user_id,interval):
-    topics, last_date = get_user_topics(user_id, interval)
+    topics = get_user_topics(user_id, interval)
+    topics = get_topic_words(topics)
     for key in topics.keys():
         topics[key].reverse()
     return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()]}, status=status.HTTP_200_OK)
@@ -304,7 +285,8 @@ def entropy(numbers):
 
 
 def get_user_LDA_chart2_by_id(request, user_id,interval):
-    topics, last_date = get_user_topics(user_id, interval)
+    topics = get_user_topics(user_id, interval)
+    topics = get_topic_words(topics)
     intervals_number = len(list(topics.values())[0])
     entropies = []
     for i in range(intervals_number):
@@ -316,10 +298,30 @@ def get_user_LDA_chart2_by_id(request, user_id,interval):
                           status=status.HTTP_200_OK)
 
 
+def get_important_topics(topics, forecast_intervals=2):
+    topics = get_topic_words(topics, THRESHOLD=0)
+    temp_dict = {}
+    for key, value in topics.items():
+        forecasts = value[-forecast_intervals:]
+        print(forecasts)
+        temp_dict[key] = max(forecasts)
+    temp_dict = {k: v for k, v in sorted(temp_dict.items(), key=lambda item: item[1])}
+    temp_dict = list(temp_dict.keys())
+    important_topics = temp_dict[0] + '_' + temp_dict[1]
+    important_topics = important_topics.replace('_', ' _ ')
+    return important_topics
 
-def get_user_ARIMA_chart_by_id(request, user_id,interval):
-    topics, last_date = get_user_topics(user_id, interval)
-    topics, important_topics, train_loss, val_loss = arima_forecast(topics, forecast_intervals=4)
+
+def get_user_ARIMA_chart_by_id(request, user_id, interval):
+    topics, train_loss, val_loss = {}, [], []
+    user_arima = UserTopicARIMA.objects.filter(twitter_user_id=user_id)\
+        .order_by('topic__name').values('topic__name', 'value', 'train_loss', 'val_loss')
+    for ua in user_arima:
+        topics[ua['topic__name']] = ua['value'].split('_')
+        train_loss.append(ua["train_loss"])
+        val_loss.append(ua['val_loss'])
+    important_topics = get_important_topics(topics)
+    topics = get_topic_words(topics)
     return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
                          'important_topics': important_topics,
                          'train_loss':round(np.average(train_loss),2),
@@ -364,9 +366,40 @@ def get_collection_ARIMA_chart(request,interval):
 
 
 def scripts(request):
-    create_and_save_model()
+    # create_and_save_model()
+    # save_topics()
+    # save_user_topics(7)
+    # for row in UserTopic.objects.all().reverse():
+    #     if UserTopic.objects.filter(week_number=row.week_number, topic_id=row.topic_id,
+    #                                 twitter_user_id=row.twitter_user_id).count() > 1:
+    #         row.delete()
 
-    # topics, last_date = get_user_topics(None, 7)
-    # find_best_arima(topics, forecast_intervals=4)
+    # twitter_users = TwitterUser.objects.all()
+    # user_topic_arima = []
+    # error_users = []
+    # for tu in twitter_users:
+    #     user_id = tu.id
+    #     topics = get_user_topics(user_id, 7)
+    #     try:
+    #         trends_time_series, train_loss, val_loss = arima_forecast(topics, forecast_intervals=2)
+    #     except:
+    #         error_users.append(user_id)
+    #         continue
+    #     c = 0
+    #     for key, value in trends_time_series.items():
+    #         topic_id = LDATopic.objects.get(name=key)
+    #         twitter_user = TwitterUser.objects.get(id=user_id)
+    #         arima_value = '_'.join([str(v) for v in value])
+    #         user_topic_arima.append(UserTopicARIMA(topic=topic_id, twitter_user=twitter_user,
+    #                                                train_loss=train_loss[c], val_loss=val_loss[c],
+    #                                                value=str(arima_value)))
+    #         c+=1
+    #     print(user_id)
+    # UserTopicARIMA.objects.bulk_create(user_topic_arima)
+    # print('user arima topic saved!')
+    # for row in UserTopicARIMA.objects.all().reverse():
+    #     if UserTopicARIMA.objects.filter(topic_id=row.topic_id,twitter_user_id=row.twitter_user_id).count() > 1:
+    #         row.delete()
+    # print('done with errors', error_users)
 
     return HttpResponse(f"done.")
