@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'after_response'
 ]
 
-MIDDLEWARE = [
+MIDDLEWARE_CLASSES = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
