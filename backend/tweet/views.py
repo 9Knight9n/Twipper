@@ -2,6 +2,7 @@ import pickle
 from datetime import datetime,timedelta
 from collections import Counter
 import numpy as np
+import pandas as pd
 import math
 import nltk
 import pytz
@@ -11,7 +12,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import permissions
-
+from operator import add
 from scripts import TFIDFExtractor
 from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model,\
     save_topics, save_user_topics
@@ -303,10 +304,11 @@ def get_important_topics(topics, forecast_intervals=2):
     temp_dict = {}
     for key, value in topics.items():
         forecasts = value[-forecast_intervals:]
-        print(forecasts)
+        forecasts = [float(f) for f in forecasts]
         temp_dict[key] = max(forecasts)
-    temp_dict = {k: v for k, v in sorted(temp_dict.items(), key=lambda item: item[1])}
-    temp_dict = list(temp_dict.keys())
+    sorted_tuples = sorted(temp_dict.items(), key=lambda item: item[1], reverse=True)
+    sorted_dict = {k: v for k, v in sorted_tuples}
+    temp_dict = list(sorted_dict.keys())
     important_topics = temp_dict[0] + '_' + temp_dict[1]
     important_topics = important_topics.replace('_', ' _ ')
     return important_topics
@@ -348,21 +350,82 @@ def get_trends_by_date(start_date, end_date):
 
 
 
-def get_collection_ARIMA_chart(request,interval):
-    topics, last_topic_date = get_user_topics(25, interval)
-    last_trend_date = last_topic_date + timedelta(days=1)
-    trends = get_trends_by_date(last_topic_date.date(), last_trend_date.date())
-    trends = ' _ '.join(trends)
-    stabilities = topics_stability(topics)
-    topics, important_topics, train_loss, val_loss = arima_forecast(topics, forecast_intervals=4)
-    return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
+def get_collection_ARIMA_chart(request, collection_id):
+    collection_users = CollectionTwitterUser.objects.filter(collection_id=collection_id).values('twitter_user_id')
+    collection_topics, collection_train_loss, collection_val_loss = {}, [], []
+    c = 0
+    for cu in collection_users:
+        user_id = cu['twitter_user_id']
+        topics = {}
+        user_arima = UserTopicARIMA.objects.filter(twitter_user_id=user_id) \
+            .order_by('topic__name').values('topic__name', 'value', 'val_loss', 'train_loss')
+        for ua in user_arima:
+            topics[ua['topic__name']] = ua['value'].split('_')
+            collection_train_loss.append(ua['train_loss'])
+            collection_val_loss.append(ua['val_loss'])
+        c += 1
+        for key in topics.keys():
+            value = [float(v) for v in topics[key]]
+            if key not in collection_topics.keys():
+                collection_topics[key] = value
+            else:
+                collection_topics[key] = list(map(add, collection_topics[key], value))
+    for key, value in collection_topics.items():
+        collection_topics[key] = [round(v/c,2) for v in value]
+
+    # last_topic_date = ''
+    # last_trend_date = last_topic_date + timedelta(days=1)
+    # trends = get_trends_by_date(last_topic_date.date(), last_trend_date.date())
+    # trends = ' _ '.join(trends)
+    important_topics = get_important_topics(collection_topics)
+    collection_topics = get_topic_words(collection_topics)
+    stabilities = topics_stability(collection_topics)
+
+    return JsonResponse({'data':[{'name':str(key),'data':collection_topics[key]} for key in collection_topics.keys()],
                          'important_topics': important_topics,
                          'stabilities': stabilities,
-                         'trends': trends,
-                         'train_loss': round(np.average(train_loss),2),
-                         'val_loss': round(np.average(val_loss),2)},
+                         'trends': '',
+                         'train_loss': round(np.average(collection_train_loss),2),
+                         'val_loss': round(np.average(collection_val_loss),2)},
                          status=status.HTTP_200_OK)
 
+
+def get_table_correlation(request, collection_id):
+    collection_users = CollectionTwitterUser.objects.filter(collection_id=collection_id).values('twitter_user_id')
+    collection_topics, collection_train_loss, collection_val_loss = {}, {}, {}
+    c = 0
+    for cu in collection_users:
+        user_id = cu['twitter_user_id']
+        topics = {}
+        user_arima = UserTopicARIMA.objects.filter(twitter_user_id=user_id) \
+            .order_by('topic__name').values('topic__name', 'value', 'val_loss', 'train_loss')
+        for ua in user_arima:
+            topics[ua['topic__name']] = ua['value'].split('_')
+            if ua['topic__name'] not in collection_train_loss.keys():
+                collection_train_loss[ua['topic__name']] = []
+                collection_val_loss[ua['topic__name']] = []
+            collection_train_loss[ua['topic__name']].append(ua['train_loss'])
+            collection_val_loss[ua['topic__name']].append(ua['val_loss'])
+        c += 1
+        for key in topics.keys():
+            value = [float(v) for v in topics[key]]
+            if key not in collection_topics.keys():
+                collection_topics[key] = value
+            else:
+                collection_topics[key] = list(map(add, collection_topics[key], value))
+    for key, value in collection_topics.items():
+        collection_topics[key] = [round(v / c, 2) for v in value]
+
+
+    stabilities = topics_stability(collection_topics)
+    for i in range(len(stabilities)):
+        stabilities[i]['train_loss'] = round(np.average(collection_train_loss[stabilities[i]['name']]),2)
+        stabilities[i]['val_loss'] = round(np.average(collection_val_loss[stabilities[i]['name']]),2)
+
+    corr = pd.DataFrame(stabilities).corr()['stability'].to_list()
+    return JsonResponse({'data': stabilities,
+                         'correlation': [{'name': 'stability correlation with train loss', 'value':round(corr[1],2)},
+                                         {'name': 'stability correlation with valloss', 'value':round(corr[2],2)}]})
 
 
 def scripts(request):

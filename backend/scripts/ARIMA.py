@@ -39,7 +39,7 @@ def arima_forecast(trends_time_series, forecast_intervals, p=4, q=3):
         val_loss.append(mean_abstract_error(forecast[:4], df[c][-4:].to_list()))
         forecast = [round(f,2) for f in forecast]
 
-        trends_time_series[c] = trends_time_series[c][:-forecast_intervals]
+        trends_time_series[c] = trends_time_series[c][:-4]
         trends_time_series[c].extend(forecast)
 
     return trends_time_series, train_loss, val_loss
