@@ -17,6 +17,9 @@ RUN npm install -g serve
 # add app
 COPY . /app
 
+# add permission
+RUN chmod 777 /app/node_modules
+
 RUN npm run build
 
 # start app
