@@ -45,9 +45,9 @@ services:
     npm:
         build:
             context: ./frontend
-            dockerfile: ../docker/npm/Dockerfile
-        command: npm start
-#        command: serve -s build
+            dockerfile: ../docker/npm/prod.Dockerfile
+#        command: npm start
+        command: serve -s build
         volumes:
             - ./frontend:/app
             - npm_node_modules:/app/node_modules
