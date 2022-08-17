@@ -12,6 +12,7 @@ import SelectCollection from "./pages/extractPage/SelectCollection";
 import SelectUser from "./pages/extractPage/SelectUser";
 import ExtractProgress from "./pages/extractPage/ExtractProgress";
 import UserAnalysis from "./pages/userAnalysis/userAnalysis";
+import CollectionAnalysis from "./pages/collectionAnalysis/collectionAnalysis";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="*" element={<Navigate to="selectcollection" replace />} />
         </Route>
         <Route path={"useranalysis/:collection"} element={<UserAnalysis/>} />
+        <Route path={"collectionanalysis/:collection"} element={<CollectionAnalysis/>} />
         <Route path="*" element={<Navigate to="extract" replace />} />
       </Routes>
     </BrowserRouter>

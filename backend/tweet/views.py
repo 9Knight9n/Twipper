@@ -421,6 +421,8 @@ def get_table_correlation(request, collection_id):
     for i in range(len(stabilities)):
         stabilities[i]['train_loss'] = round(np.average(collection_train_loss[stabilities[i]['name']]),2)
         stabilities[i]['val_loss'] = round(np.average(collection_val_loss[stabilities[i]['name']]),2)
+        stabilities[i]['key'] = stabilities[i].pop('name')
+        stabilities[i]['key'] = int(stabilities[i]['key'])+1
 
     corr = pd.DataFrame(stabilities).corr()['stability'].to_list()
     return JsonResponse({'data': stabilities,
@@ -430,6 +432,7 @@ def get_table_correlation(request, collection_id):
 
 def scripts(request):
     # create_and_save_model()
+
     # save_topics()
     # save_user_topics(7)
     # for row in UserTopic.objects.all().reverse():
