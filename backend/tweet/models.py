@@ -112,3 +112,14 @@ class TrendOccurrence(models.Model):
 
     def __str__(self):
         return self.trend.name + ":" + str(self.date)
+
+
+class TrendPredictionData(models.Model):
+    id = models.AutoField(primary_key=True)
+    date = models.DateField(null=False)
+    text = models.TextField(null=False)
+    topic = models.JSONField(null=False)
+    target_topic = models.JSONField(null=False)
+
+    def __str__(self):
+        return self.date

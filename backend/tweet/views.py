@@ -15,6 +15,7 @@ from rest_framework import permissions
 from scripts import TFIDFExtractor
 from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model
 from scripts.ARIMA import arima_forecast, find_best_arima
+from scripts.Trend.TrendPrediction import train
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets
 from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet, TrendOccurrence
@@ -364,8 +365,8 @@ def get_collection_ARIMA_chart(request,interval):
 
 
 def scripts(request):
-    create_and_save_model()
-
+    # create_and_save_model()
+    train()
     # topics, last_date = get_user_topics(None, 7)
     # find_best_arima(topics, forecast_intervals=4)
 
