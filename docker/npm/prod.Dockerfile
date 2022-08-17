@@ -10,7 +10,7 @@ ENV PATH /app/node_modules/.bin:$PATH
 COPY package.json /app
 COPY package-lock.json /app
 RUN npm ci --silent
-RUN npm install react-scripts@3.4.1 -g --silent
+RUN npm install react-scripts@4.0.0 -g --silent
 RUN npm install -g serve
 
 
