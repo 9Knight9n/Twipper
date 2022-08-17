@@ -229,7 +229,6 @@ def get_user_topics(user_id, interval, THRESHOLD = 0.02):
     else:
         tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date', 'content')
         date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
-    'got tweets!'
     intervals = []
     if date.count() == 0:
         return JsonResponse({'data': []}, status=status.HTTP_200_OK)
@@ -306,21 +305,19 @@ def entropy(numbers):
 def get_user_LDA_chart2_by_id(request, user_id,interval):
     topics = get_user_topics(user_id, interval)
     intervals_number = len(list(topics.values())[0])
-    numbers = []
+    entropies = []
     for i in range(intervals_number):
         temp = [value[i] for value in topics.values()]
-        numbers.append(temp.index(max(temp)))
-    numbers = list(dict(Counter(numbers)).values())
-    data_entropy = round(entropy(numbers),2)
+        entropies.append(round(entropy(temp),2))
     return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
-                         'entropy': data_entropy},
-                        status=status.HTTP_200_OK)
+                         'entropies': [{'name': 'entropy', 'data': entropies}],
+                         'entropy_avg': round(np.average(entropies),2)},
+                          status=status.HTTP_200_OK)
 
 
 
 def get_user_ARIMA_chart_by_id(request, user_id,interval):
     topics = get_user_topics(user_id, interval)
-    print('got topics!')
     topics, important_topics, train_loss, val_loss = arima_forecast(topics, forecast_intervals=4)
     return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
                          'important_topics': important_topics,
@@ -342,7 +339,6 @@ def topics_stability(topics):
 
 def get_collection_ARIMA_chart(request,interval):
     topics = get_user_topics(None, interval)
-    print('got topics!')
     stabilities = topics_stability(topics)
     trends, important_topics, train_loss, val_loss = arima_forecast(topics, forecast_intervals=4)
     trends = ''
