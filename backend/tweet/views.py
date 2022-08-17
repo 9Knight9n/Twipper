@@ -218,8 +218,8 @@ def get_user_TF_chart1_by_id(request, user_id, start_date, stop_date):
     start_date = datetime.strptime(start_date+" 00:00:00", '%d-%m-%y %H:%M:%S')
     stop_date = datetime.strptime(stop_date+" 23:59:59", '%d-%m-%y %H:%M:%S')
     tweets = Tweet.objects.filter(twitter_user__id=user_id,date__gte=start_date,date__lte=stop_date).values('content')
-    data = TFIDFExtractor.apply(" ".join([tweet['content'] for tweet in tweets]),30)
-    return JsonResponse({'data':data}, status=status.HTTP_200_OK)
+    data, unique = TFIDFExtractor.apply(" ".join([tweet['content'] for tweet in tweets]),30)
+    return JsonResponse({'data':data, 'unique':unique}, status=status.HTTP_200_OK)
 
 
 def get_user_topics(user_id, interval, THRESHOLD = 0.02):
