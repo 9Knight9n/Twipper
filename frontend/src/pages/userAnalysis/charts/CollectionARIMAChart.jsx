@@ -133,6 +133,20 @@ const CollectionARIMAChart = ({userId}) => {
   return (
     <div className={'d-flex flex-column'} dir={"ltr"} id="chart1">
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
+        <h5 className={'my-auto'}>کلمات احتمالی ترند: </h5>
+      </div>
+      <div className={'d-flex flex-row mx-auto'} dir={'ltr'}>
+        <span>{topics}</span>
+      </div>
+      <br/>
+      <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
+        <h5 className={'my-auto'}>کلمات ترند اصلی: </h5>
+      </div>
+      <div className={'d-flex flex-row mx-auto'} dir={'ltr'}>
+        <span>{trends}</span>
+      </div>
+      <br/>
+      <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
         <h5 className={'my-auto'}>پایداری موضوعات: </h5>
       </div>
       {
@@ -142,16 +156,6 @@ const CollectionARIMAChart = ({userId}) => {
             </div>
         ))
       }
-      <br/>
-      <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
-        <h5 className={'my-auto'}>کلمات احتمالی ترند: </h5>
-        <span>{topics}</span>
-      </div>
-      <br/>
-      <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
-        <h5 className={'my-auto'}>کلمات ترند اصلی: </h5>
-        <span>{trends}</span>
-      </div>
       <br/>
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
         <h6 className={'my-auto'}>نمودار فراوانی موضوعات در هر </h6>

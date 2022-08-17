@@ -17,7 +17,7 @@ from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model
 from scripts.ARIMA import arima_forecast, find_best_arima
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets
-from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet
+from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet, TrendOccurrence
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_LOCATION
 
 
@@ -277,11 +277,12 @@ def get_user_topics(user_id, interval, THRESHOLD = 0.02):
                     trends[new_key[:-1]].append(round(top_trends[i], 2))
                     break
 
-    return trends
+    last_date = intervals[-1]['range'][1]
+    return trends, last_date
 
 
 def get_user_LDA_chart1_by_id(request, user_id,interval):
-    topics = get_user_topics(user_id, interval)
+    topics, last_date = get_user_topics(user_id, interval)
     for key in topics.keys():
         topics[key].reverse()
     return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()]}, status=status.HTTP_200_OK)
@@ -303,7 +304,7 @@ def entropy(numbers):
 
 
 def get_user_LDA_chart2_by_id(request, user_id,interval):
-    topics = get_user_topics(user_id, interval)
+    topics, last_date = get_user_topics(user_id, interval)
     intervals_number = len(list(topics.values())[0])
     entropies = []
     for i in range(intervals_number):
@@ -317,7 +318,7 @@ def get_user_LDA_chart2_by_id(request, user_id,interval):
 
 
 def get_user_ARIMA_chart_by_id(request, user_id,interval):
-    topics = get_user_topics(user_id, interval)
+    topics, last_date = get_user_topics(user_id, interval)
     topics, important_topics, train_loss, val_loss = arima_forecast(topics, forecast_intervals=4)
     return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
                          'important_topics': important_topics,
@@ -337,25 +338,35 @@ def topics_stability(topics):
     return stabilities
 
 
+def get_trends_by_date(start_date, end_date):
+    all_trends = TrendOccurrence.objects.all().values('date', 'trend__name')
+    trends = [t['trend__name'] for t in all_trends if start_date <= t['date'] < end_date]
+    trends = list(set(trends))
+    return trends
+
+
+
 def get_collection_ARIMA_chart(request,interval):
-    topics = get_user_topics(None, interval)
+    topics, last_topic_date = get_user_topics(25, interval)
+    last_trend_date = last_topic_date + timedelta(days=1)
+    trends = get_trends_by_date(last_topic_date.date(), last_trend_date.date())
+    trends = ' _ '.join(trends)
     stabilities = topics_stability(topics)
-    trends, important_topics, train_loss, val_loss = arima_forecast(topics, forecast_intervals=4)
-    trends = ''
+    topics, important_topics, train_loss, val_loss = arima_forecast(topics, forecast_intervals=4)
     return JsonResponse({'data':[{'name':str(key),'data':topics[key]} for key in topics.keys()],
-                        'important_topics': important_topics,
-                        'stabilities': stabilities,
-                        'trends': trends,
+                         'important_topics': important_topics,
+                         'stabilities': stabilities,
+                         'trends': trends,
                          'train_loss': round(np.average(train_loss),2),
                          'val_loss': round(np.average(val_loss),2)},
-                        status=status.HTTP_200_OK)
+                         status=status.HTTP_200_OK)
 
 
 
 def scripts(request):
     create_and_save_model()
 
-    # topics = get_user_topics(None, 7)
+    # topics, last_date = get_user_topics(None, 7)
     # find_best_arima(topics, forecast_intervals=4)
 
     return HttpResponse(f"done.")
