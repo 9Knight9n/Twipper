@@ -26,7 +26,7 @@ def arima_forecast(trends_time_series, forecast_intervals, p=4, q=3):
     df = pd.DataFrame(trends_time_series)
     important_topics, train_loss, val_loss = [], [], []
     for c in df.columns:
-        train_set = df[c][:-forecast_intervals]
+        train_set = df[c][:-4]
         d = find_d(train_set)
 
         arima_model = ARIMA(train_set, order=(p, d, q))
@@ -35,20 +35,14 @@ def arima_forecast(trends_time_series, forecast_intervals, p=4, q=3):
         predictions = model.predict().to_list()
         train_loss.append(mean_abstract_error(predictions, train_set.to_list()))
 
-        forecast = model.forecast(2*forecast_intervals).to_list()
-        val_loss.append(mean_abstract_error(forecast[:forecast_intervals], df[c][-forecast_intervals:].to_list()))
+        forecast = model.forecast(4 + forecast_intervals).to_list()
+        val_loss.append(mean_abstract_error(forecast[:4], df[c][-4:].to_list()))
         forecast = [round(f,2) for f in forecast]
 
-        important_topics.append((c, max(forecast)))
-        trends_time_series[c] = trends_time_series[c][:-forecast_intervals]
+        trends_time_series[c] = trends_time_series[c][:-4]
         trends_time_series[c].extend(forecast)
 
-    important_topics.sort(key=lambda x: x[1], reverse=True)
-    important_topics = [important_topics[0][0], important_topics[1][0]]
-    important_topics = important_topics[0].split('_') + important_topics[1].split('_')
-    important_topics = ' _ '.join(important_topics)
-
-    return trends_time_series, important_topics, train_loss, val_loss
+    return trends_time_series, train_loss, val_loss
 
 
 def find_best_arima(trends_time_series, forecast_intervals):
@@ -65,7 +59,7 @@ def find_best_arima(trends_time_series, forecast_intervals):
                 d = find_d(train_set)
 
                 arima_model = ARIMA(train_set, order=(p, d, q))
-                model = arima_model.fit()
+                model = arima_model.fit(train_set)
 
                 predictions = model.predict().to_list()
                 train_loss.append(mean_abstract_error(predictions, train_set.to_list()))

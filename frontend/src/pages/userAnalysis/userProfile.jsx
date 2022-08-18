@@ -102,11 +102,11 @@ function UserProfile({selectedUserId}) {
                <div className="col-lg-12 col-md-12"><ARIMAChart userId={selectedUserId}/></div>
             </div>
         </Panel>
-        <Panel header="پیشبینی trend با ARIMA" key="7">
-            <div className="row">
-               <div className="col-lg-12 col-md-12"><CollectionARIMAChart userId={selectedUserId}/></div>
-            </div>
-        </Panel>
+        {/*<Panel header="پیشبینی trend با ARIMA" key="7">*/}
+        {/*    <div className="row">*/}
+        {/*       <div className="col-lg-12 col-md-12"><CollectionARIMAChart userId={selectedUserId}/></div>*/}
+        {/*    </div>*/}
+        {/*</Panel>*/}
         {/*<div className="ant-descriptions-title" style={{marginBottom: '20px'}}></div>*/}
 
        </Collapse>

@@ -5,7 +5,51 @@ import {baseURL} from "../../../components/config";
 
 const { Option } = Select;
 
-let options = {
+let options1 = {
+  chart: {
+    type: 'line',
+    zoom: {
+      enabled: false
+    }
+  },
+  dataLabels: {
+    enabled: false
+  },
+  stroke: {
+    curve: 'straight'
+  },
+  grid: {
+    borderColor: '#e7e7e7',
+    row: {
+      colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
+      opacity: 0.5
+    },
+  },
+    noData: {
+    text: "اطلاعاتی جهت نمایش وجود ندارد.",
+    align: "center",
+    verticalAlign: "middle",
+    offsetX: 0,
+    offsetY: 0,
+    style: {
+      color: undefined,
+      fontSize: "14px",
+      fontFamily: undefined,
+    },
+  },
+  yaxis: {
+    title: {
+      text: "آنتروپی",
+    },
+  },
+  xaxis: {
+    title: {
+      text: "زمان",
+    },
+  },
+}
+
+let options2 = {
   colors : ['#C62828', '#AD1457','#4E342E', '#558B2F', '#4DB6AC', '#616161', '#6A1B9A','#D84315', '#4527A0', '#283593', '#1565C0', '#18FFFF', '#00838F', '#00695C',
     '#2E7D32', '#9E9D24', '#F9A825', '#FF8F00', '#EF6C00', '#37474F','#D84315'],
   chart: {
@@ -90,6 +134,7 @@ let options = {
 const LDAChart2 = ({userId}) => {
   const [series, setSeries] = useState([{ name: "موضوع ", data: [] }]);
   const [entropy, setEntropy] = useState('');
+  const [entropies, setEntropies] = useState([{ name: "آنتروپی ", data: [] }]);
 
   useEffect(() => {
     getSeries(30)
@@ -110,7 +155,8 @@ const LDAChart2 = ({userId}) => {
         // let series = [];
         // series.push({ data: temp.data });
         setSeries(temp.data);
-        setEntropy(temp.entropy);
+        setEntropy(temp.entropy_avg);
+        setEntropies(temp.entropies);
       })
       .catch(error => console.log('error', error));
 
@@ -123,9 +169,16 @@ const LDAChart2 = ({userId}) => {
   return (
     <div className={'d-flex flex-column'} dir={"ltr"} id="chart1">
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
-        <h6 className={'my-auto'}>آنتروپی موضوعات کاربر: </h6>
+        <h6 className={'my-auto'}>آنتروپی میانگین کاربر: </h6>
         <span>{entropy}</span>
       </div>
+      <ReactApexChart
+        options={options1}
+        series={entropies}
+        height={200}
+        // xaxis={}
+      />
+      <br/>
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
         <h6 className={'my-auto'}>نمودار فراوانی موضوع در هر </h6>
         <Select
@@ -139,7 +192,7 @@ const LDAChart2 = ({userId}) => {
         </Select>
       </div>
       <ReactApexChart
-        options={options}
+        options={options2}
         series={series}
         height={600}
         // xaxis={}
