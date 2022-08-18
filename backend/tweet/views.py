@@ -373,10 +373,10 @@ def get_collection_ARIMA_chart(request, collection_id):
     for key, value in collection_topics.items():
         collection_topics[key] = [round(v/c,2) for v in value]
 
-    # last_topic_date = ''
-    # last_trend_date = last_topic_date + timedelta(days=1)
-    # trends = get_trends_by_date(last_topic_date.date(), last_trend_date.date())
-    # trends = ' _ '.join(trends)
+    last_topic_date = datetime.strptime('08-12-2022', '%m-%d-%Y')
+    last_trend_date = last_topic_date + timedelta(days=1)
+    trends = get_trends_by_date(last_topic_date.date(), last_trend_date.date())
+    trends = ' _ '.join(trends)
     important_topics = get_important_topics(collection_topics)
     collection_topics = get_topic_words(collection_topics)
     stabilities = topics_stability(collection_topics)
@@ -384,7 +384,7 @@ def get_collection_ARIMA_chart(request, collection_id):
     return JsonResponse({'data':[{'name':str(key),'data':collection_topics[key]} for key in collection_topics.keys()],
                          'important_topics': important_topics,
                          'stabilities': stabilities,
-                         'trends': '',
+                         'trends': trends,
                          'train_loss': round(np.average(collection_train_loss),2),
                          'val_loss': round(np.average(collection_val_loss),2)},
                          status=status.HTTP_200_OK)
@@ -421,8 +421,6 @@ def get_table_correlation(request, collection_id):
     for i in range(len(stabilities)):
         stabilities[i]['train_loss'] = round(np.average(collection_train_loss[stabilities[i]['name']]),2)
         stabilities[i]['val_loss'] = round(np.average(collection_val_loss[stabilities[i]['name']]),2)
-        stabilities[i]['key'] = stabilities[i].pop('name')
-        stabilities[i]['key'] = int(stabilities[i]['key'])+1
 
     corr = pd.DataFrame(stabilities).corr()['stability'].to_list()
     return JsonResponse({'data': stabilities,
@@ -433,39 +431,39 @@ def get_table_correlation(request, collection_id):
 def scripts(request):
     # create_and_save_model()
 
-    # save_topics()
-    # save_user_topics(7)
-    # for row in UserTopic.objects.all().reverse():
-    #     if UserTopic.objects.filter(week_number=row.week_number, topic_id=row.topic_id,
-    #                                 twitter_user_id=row.twitter_user_id).count() > 1:
-    #         row.delete()
+    save_topics()
+    save_user_topics(7)
+    for row in UserTopic.objects.all().reverse():
+        if UserTopic.objects.filter(week_number=row.week_number, topic_id=row.topic_id,
+                                    twitter_user_id=row.twitter_user_id).count() > 1:
+            row.delete()
 
-    # twitter_users = TwitterUser.objects.all()
-    # user_topic_arima = []
-    # error_users = []
-    # for tu in twitter_users:
-    #     user_id = tu.id
-    #     topics = get_user_topics(user_id, 7)
-    #     try:
-    #         trends_time_series, train_loss, val_loss = arima_forecast(topics, forecast_intervals=2)
-    #     except:
-    #         error_users.append(user_id)
-    #         continue
-    #     c = 0
-    #     for key, value in trends_time_series.items():
-    #         topic_id = LDATopic.objects.get(name=key)
-    #         twitter_user = TwitterUser.objects.get(id=user_id)
-    #         arima_value = '_'.join([str(v) for v in value])
-    #         user_topic_arima.append(UserTopicARIMA(topic=topic_id, twitter_user=twitter_user,
-    #                                                train_loss=train_loss[c], val_loss=val_loss[c],
-    #                                                value=str(arima_value)))
-    #         c+=1
-    #     print(user_id)
-    # UserTopicARIMA.objects.bulk_create(user_topic_arima)
-    # print('user arima topic saved!')
-    # for row in UserTopicARIMA.objects.all().reverse():
-    #     if UserTopicARIMA.objects.filter(topic_id=row.topic_id,twitter_user_id=row.twitter_user_id).count() > 1:
-    #         row.delete()
-    # print('done with errors', error_users)
+    twitter_users = TwitterUser.objects.all()
+    user_topic_arima = []
+    error_users = []
+    for tu in twitter_users:
+        user_id = tu.id
+        topics = get_user_topics(user_id, 7)
+        try:
+            trends_time_series, train_loss, val_loss = arima_forecast(topics, forecast_intervals=2)
+        except:
+            error_users.append(user_id)
+            continue
+        c = 0
+        for key, value in trends_time_series.items():
+            topic_id = LDATopic.objects.get(name=key)
+            twitter_user = TwitterUser.objects.get(id=user_id)
+            arima_value = '_'.join([str(v) for v in value])
+            user_topic_arima.append(UserTopicARIMA(topic=topic_id, twitter_user=twitter_user,
+                                                   train_loss=train_loss[c], val_loss=val_loss[c],
+                                                   value=str(arima_value)))
+            c+=1
+        print(user_id)
+    UserTopicARIMA.objects.bulk_create(user_topic_arima)
+    print('user arima topic saved!')
+    for row in UserTopicARIMA.objects.all().reverse():
+        if UserTopicARIMA.objects.filter(topic_id=row.topic_id,twitter_user_id=row.twitter_user_id).count() > 1:
+            row.delete()
+    print('done with errors', error_users)
 
     return HttpResponse(f"done.")

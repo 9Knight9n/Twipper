@@ -95,6 +95,11 @@ let options = {
 
 const columns = [
   {
+    title: 'Topic number',
+    dataIndex: 'name',
+    key: 'name',
+  },
+  {
     title: 'Stability',
     dataIndex: 'stability',
     key: 'stability',
