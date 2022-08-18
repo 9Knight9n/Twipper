@@ -142,44 +142,45 @@ def save_user_topics(interval):
     twitter_users = TwitterUser.objects.all()
     for tu in twitter_users:
         user_id = tu.id
-        tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date', 'content')
-        date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
+        if user_id>27:
+            tweets = Tweet.objects.filter(twitter_user__id=user_id).values('date', 'content')
+            date = Tweet.objects.filter(twitter_user__id=user_id).order_by('-date')
+            print(user_id, len(tweets))
+            if date.count() == 0:
+                continue
+            print(user_id, len(date))
+            date = date[0].date
+            OLDEST_TWEET_DATE_NATIVE = OLDEST_TWEET_DATE.replace(tzinfo=pytz.UTC)
+            intervals = []
+            while date >= OLDEST_TWEET_DATE_NATIVE:
+                new_date = date - timedelta(days=interval)
+                mid_date = date - timedelta(days=interval) / 2
+                intervals.append(
+                    {
+                        'x': mid_date.strftime('%d %b'),
+                        'z': date.strftime('%d %b') + new_date.strftime(' - %d %b'),
+                        'range': (new_date, date),
+                        # 'y':0
+                    }
+                )
+                date = new_date
 
-        if date.count() == 0:
-            break
+            intervals.reverse()
+            for i, interval_item in enumerate(intervals):
+                tweets_in_interval = []
+                for tweet in tweets:
+                    if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
+                        tweets_in_interval.append(tweet)
+                top_trends = lda_model.extract_topics([tweet['content'] for tweet in tweets_in_interval])
+                top_trends = percentage_results(top_trends, 8)
+                for j in range(8):
+                    if j not in top_trends.keys():
+                        top_trends[j] = 0
 
-        date = date[0].date
-        OLDEST_TWEET_DATE_NATIVE = OLDEST_TWEET_DATE.replace(tzinfo=pytz.UTC)
-        intervals = []
-        while date >= OLDEST_TWEET_DATE_NATIVE:
-            new_date = date - timedelta(days=interval)
-            mid_date = date - timedelta(days=interval) / 2
-            intervals.append(
-                {
-                    'x': mid_date.strftime('%d %b'),
-                    'z': date.strftime('%d %b') + new_date.strftime(' - %d %b'),
-                    'range': (new_date, date),
-                    # 'y':0
-                }
-            )
-            date = new_date
-
-        intervals.reverse()
-        for i, interval_item in enumerate(intervals):
-            tweets_in_interval = []
-            for tweet in tweets:
-                if interval_item['range'][0] < tweet['date'] < interval_item['range'][1]:
-                    tweets_in_interval.append(tweet)
-            top_trends = lda_model.extract_topics([tweet['content'] for tweet in tweets_in_interval])
-            top_trends = percentage_results(top_trends, 8)
-            for j in range(8):
-                if j not in top_trends.keys():
-                    top_trends[j] = 0
-
-            for key,value in top_trends.items():
-                topic_id = LDATopic.objects.get(name=key)
-                twitter_user = TwitterUser.objects.get(id=user_id)
-                user_trends.append(UserTopic(week_number=i+1, topic=topic_id, twitter_user=twitter_user, value=round(value,2)))
+                for key,value in top_trends.items():
+                    topic_id = LDATopic.objects.get(name=key)
+                    twitter_user = TwitterUser.objects.get(id=user_id)
+                    user_trends.append(UserTopic(week_number=i+1, topic=topic_id, twitter_user=twitter_user, value=round(value,2)))
 
     UserTopic.objects.bulk_create(user_trends)
     print('user topics saved!')
