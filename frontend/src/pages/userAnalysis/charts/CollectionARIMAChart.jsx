@@ -85,7 +85,7 @@ let options = {
     },
   },
   forecastDataPoints: {
-    count: 8
+    count: 6
   },
 };
 
@@ -108,7 +108,7 @@ const CollectionARIMAChart = ({userId}) => {
       method: 'GET',
       redirect: 'follow'
     };
-    fetch(baseURL + "tweet/get_collection_ARIMA_chart/" + length.toString() + "/", requestOptions)
+    fetch(baseURL + "tweet/get_collection_ARIMA_chart/" + '5' + "/", requestOptions)
       .then(response => response.text())
       .then(result => {
         let temp = JSON.parse(result);

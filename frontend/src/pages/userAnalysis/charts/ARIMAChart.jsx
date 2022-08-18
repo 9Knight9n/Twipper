@@ -85,7 +85,7 @@ let options = {
     },
   },
   forecastDataPoints: {
-    count: 8
+    count: 6
   },
 };
 
@@ -130,6 +130,8 @@ const ARIMAChart = ({userId}) => {
     <div className={'d-flex flex-column'} dir={"ltr"} id="chart1">
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
         <h6 className={'my-auto'}>کلمات مهم در 2 ماه آینده: </h6>
+      </div>
+      <div className={'d-flex flex-row mx-auto'} dir={'ltr'}>
         <span>{topics}</span>
       </div>
       <br/>
@@ -148,7 +150,7 @@ const ARIMAChart = ({userId}) => {
       <ReactApexChart
         options={options}
         series={series}
-        height={600}
+        height={500}
         // xaxis={}
       />
       <br/>
