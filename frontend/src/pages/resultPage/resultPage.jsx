@@ -1,19 +1,13 @@
 import React, {useState,useEffect} from 'react';
-import { Avatar, List, Space } from 'antd';
-import { useNavigate, useParams } from "react-router-dom";
 import Menu from "./menu";
-import './userAnalysis.css'
-import UserList from "./userList";
+import { Outlet , useParams } from "react-router-dom";
 import {baseURL} from "../../components/config";
 
-
-
-function UserAnalysis(props) {
+function ResultPage(props) {
 
     const [collection, setCollection] = useState('');
     const [userList, setUserList] = useState([]);
     let params = useParams();
-
     useEffect(() => {
         loadCollection()
     }, []);
@@ -34,6 +28,7 @@ function UserAnalysis(props) {
             .catch(error => console.log('error', error));
     };
 
+
     return (
         <div className={'main-container-md'}>
             <div className={'d-flex flex-row mb-3'}>
@@ -48,14 +43,9 @@ function UserAnalysis(props) {
             <Menu/>
             <br/>
             <br/>
-            <h6>
-                برای مشاهده تحلیل برروی کاربر مدنظر کلیک کنید.
-            </h6>
-            <br/>
-            <UserList userList={userList}/>
+            <Outlet context={userList}/>
         </div>
-
     );
 }
 
-export default UserAnalysis;
+export default ResultPage;

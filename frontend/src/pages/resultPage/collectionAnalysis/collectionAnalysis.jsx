@@ -2,10 +2,9 @@ import React, {useState,useEffect} from 'react';
 import { Avatar, List, Space } from 'antd';
 import { useNavigate, useParams } from "react-router-dom";
 import './collectionAnalysis.css'
-import Menu from "../userAnalysis/menu";
 import ReactApexChart from "react-apexcharts";
 import { Select, Table } from 'antd';
-import {baseURL} from "../../components/config";
+import {baseURL} from "../../../components/config";
 
 const { Option } = Select;
 
