@@ -435,7 +435,7 @@ def scripts(request):
     # topics, last_date = get_user_topics(None, 7)
     # find_best_arima(topics, forecast_intervals=4)
 
-    # save_topics()
+    save_topics()
     save_user_topics(7)
     for row in UserTopic.objects.all().reverse():
         if UserTopic.objects.filter(week_number=row.week_number, topic_id=row.topic_id,

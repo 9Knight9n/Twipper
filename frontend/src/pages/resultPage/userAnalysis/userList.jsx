@@ -1,6 +1,5 @@
 import React, {useState,useEffect} from 'react';
 import { Avatar, List, Space,Drawer } from 'antd';
-import Menu from "./menu";
 import './userAnalysis.css'
 import UserProfile from "./userProfile";
 

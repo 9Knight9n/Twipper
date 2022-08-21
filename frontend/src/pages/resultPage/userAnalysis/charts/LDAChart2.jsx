@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import { Select } from 'antd';
-import {baseURL} from "../../../components/config";
+import {baseURL} from "../../../../components/config";
 
 const { Option } = Select;
 

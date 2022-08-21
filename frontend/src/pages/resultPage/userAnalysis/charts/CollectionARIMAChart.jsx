@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import { Select } from 'antd';
-import {baseURL} from "../../../components/config";
+import {baseURL} from "../../../../components/config";
 
 const { Option } = Select;
 
@@ -90,8 +90,10 @@ let options = {
 };
 
 
-const ARIMAChart = ({userId}) => {
+const CollectionARIMAChart = ({userId}) => {
   const [series, setSeries] = useState([{ name: "موضوع ", data: [] }]);
+  const [stabilities, setStabilities] = useState([]);
+  const [trends, setTrends] = useState([]);
   const [topics, setTopics] = useState([]);
   const [trainLoss, setTrainLoss] = useState(0);
   const [valLoss, setValLoss] = useState(0);
@@ -106,7 +108,7 @@ const ARIMAChart = ({userId}) => {
       method: 'GET',
       redirect: 'follow'
     };
-    fetch(baseURL + "tweet/get_user_ARIMA_chart_by_id/" + userId.toString() + "/" + length.toString() + "/", requestOptions)
+    fetch(baseURL + "tweet/get_collection_ARIMA_chart/" + '5' + "/", requestOptions)
       .then(response => response.text())
       .then(result => {
         let temp = JSON.parse(result);
@@ -114,7 +116,9 @@ const ARIMAChart = ({userId}) => {
         // let series = [];
         // series.push({ data: temp.data });
         setSeries(temp.data);
+        setStabilities(temp.stabilities);
         setTopics(temp.important_topics);
+        setTrends(temp.trends);
         setTrainLoss(temp.train_loss);
         setValLoss(temp.val_loss);
       })
@@ -129,16 +133,34 @@ const ARIMAChart = ({userId}) => {
   return (
     <div className={'d-flex flex-column'} dir={"ltr"} id="chart1">
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
-        <h6 className={'my-auto'}>کلمات مهم در 2 ماه آینده: </h6>
+        <h5 className={'my-auto'}>کلمات احتمالی ترند: </h5>
       </div>
       <div className={'d-flex flex-row mx-auto'} dir={'ltr'}>
         <span>{topics}</span>
       </div>
       <br/>
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
+        <h5 className={'my-auto'}>کلمات ترند اصلی: </h5>
+      </div>
+      <div className={'d-flex flex-row mx-auto'} dir={'ltr'}>
+        <span>{trends}</span>
+      </div>
+      <br/>
+      <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
+        <h5 className={'my-auto'}>پایداری موضوعات: </h5>
+      </div>
+      {
+        stabilities.map((s) => (
+            <div className={'d-flex flex-row mx-auto'}>
+              <h6 className={'my-auto'}>{s.name}:{s.stability}</h6>
+            </div>
+        ))
+      }
+      <br/>
+      <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
         <h6 className={'my-auto'}>نمودار فراوانی موضوعات در هر </h6>
         <Select
-          id={'selectvalue4'}
+          id={'selectvalue3'}
           defaultValue="7"
           bordered={false}
           onChange={handleChange}
@@ -150,7 +172,7 @@ const ARIMAChart = ({userId}) => {
       <ReactApexChart
         options={options}
         series={series}
-        height={500}
+        height={600}
         // xaxis={}
       />
       <br/>
@@ -164,4 +186,4 @@ const ARIMAChart = ({userId}) => {
   );
 };
 
-export default ARIMAChart;
+export default CollectionARIMAChart;

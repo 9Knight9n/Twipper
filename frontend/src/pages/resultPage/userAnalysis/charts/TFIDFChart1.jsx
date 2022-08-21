@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import { DatePicker,ConfigProvider } from 'antd';
-import {baseURL} from "../../../components/config";
+import {baseURL} from "../../../../components/config";
 import locale from 'antd/es/locale/fa_IR';
 import moment from 'moment';
 

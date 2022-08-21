@@ -4,13 +4,12 @@ import {CheckCircleOutlined,CloseCircleOutlined} from '@ant-design/icons';
 import React, { useState,useEffect } from 'react';
 import { Collapse } from 'antd';
 import TweetCountChart1 from "./charts/tweetCountChart1";
-import {baseURL} from "../../components/config";
+import {baseURL} from "../../../components/config";
 import TweetCountChart2 from "./charts/tweetCountChart2";
 import TFIDFChart1 from "./charts/TFIDFChart1";
 import LDAChart1 from "./charts/LDAChart1";
 import LDAChart2 from "./charts/LDAChart2";
 import ARIMAChart from "./charts/ARIMAChart";
-import CollectionARIMAChart from "./charts/CollectionARIMAChart";
 
 const { Panel } = Collapse;
 

@@ -36,7 +36,9 @@ function ExtractProgress() {
                         description: 'مجموعه مدنظر اضافه شد.',
                     });
                     await new Promise(r => setTimeout(r, 2000));
-                    return navigate('/useranalysis/' + params.collection)
+                    if (window.location.pathname.includes("extract/extractprogress"))
+                        return navigate('/result/useranalysis/' + params.collection)
+                    return null
                 }
             })
             .catch(error => console.log('error', error));

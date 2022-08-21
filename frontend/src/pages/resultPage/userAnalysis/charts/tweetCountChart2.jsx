@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import { Select } from 'antd';
-import {baseURL} from "../../../components/config";
+import {baseURL} from "../../../../components/config";
 
 const { Option } = Select;
 
@@ -32,7 +32,7 @@ let options = {
       },
     },
     z: {
-      title: "بازه زمانی :",
+      title: "زمان :",
     }
   },
   markers: {
@@ -69,7 +69,7 @@ let options = {
     },
   },
   xaxis: {
-    type:'datetime',
+    // type:'datetime',
     // tickAmount: 2,
     title: {
       text: "زمان",
@@ -86,7 +86,7 @@ let options = {
 };
 
 
-const TweetCountChart1 = ({userId}) => {
+const TweetCountChart2 = ({userId}) => {
   const [series, setSeries] = useState([{ name: "تعداد پیام ", data: [] }]);
 
   useEffect(() => {
@@ -103,7 +103,7 @@ const TweetCountChart1 = ({userId}) => {
       method: 'GET',
       redirect: 'follow'
     };
-    fetch(baseURL + "tweet/get_user_tweet_count_chart1_by_id/" + userId.toString() + "/" + length.toString() + "/", requestOptions)
+    fetch(baseURL + "tweet/get_user_tweet_count_chart2_by_id/" + userId.toString() + "/" + length.toString() + "/", requestOptions)
       .then(response => response.text())
       .then(result => {
         let temp = JSON.parse(result);
@@ -122,16 +122,15 @@ const TweetCountChart1 = ({userId}) => {
   return (
     <div className={'d-flex flex-column'} dir={"ltr"} id="chart1">
       <div className={'d-flex flex-row mx-auto'} dir={'rtl'}>
-        <h6 className={'my-auto'}>نمودار تعداد پیام در هر </h6>
+        <h6 className={'my-auto'}>نمودار تعداد پیام در </h6>
         <Select
           id={'selectvalue1'}
           defaultValue="7"
           bordered={false}
           onChange={handleChange}
         >
-          <Option value="1">روز</Option>
-          <Option value="7">هفته</Option>
-          <Option value="30">ماه</Option>
+          <Option value="1">هر ساعت روز</Option>
+          <Option value="7">هر روز هفته</Option>
         </Select>
       </div>
       <ReactApexChart
@@ -144,4 +143,4 @@ const TweetCountChart1 = ({userId}) => {
   );
 };
 
-export default TweetCountChart1;
+export default TweetCountChart2;
