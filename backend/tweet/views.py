@@ -17,7 +17,7 @@ from scripts import TFIDFExtractor
 from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model,\
     save_topics, save_user_topics
 from scripts.ARIMA import arima_forecast, find_best_arima
-from scripts.Trend.TrendPrediction import train
+# from scripts.Trend.TrendPrediction import train
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets
 from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet,\
@@ -26,7 +26,7 @@ from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_
 
 
 def index(request):
-    return HttpResponse("Hello, world. You're at the polls index.")
+    return HttpResponse("Hello, world. You're at the Twipper index.")
 
 class CollectionApiView(APIView):
     # add permission to check if user is authenticated
