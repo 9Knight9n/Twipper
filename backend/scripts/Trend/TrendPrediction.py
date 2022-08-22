@@ -9,7 +9,7 @@ from keras.layers import Reshape, Input, Dense, Conv1D, MaxPooling1D, GlobalMaxP
 import tensorflow as tf
 
 from scripts.Trend.config import LDA_SIZE, TRENDS_NUMBER, DAILY_MAX_TREND
-from scripts.preprocess import tweet_preprocess
+from scripts.preprocess import tweet_preprocess, trend_preprocess
 from tweet.models import Tweet, Trend, TrendOccurrence, TrendPredictionData
 from twipper.config import OLDEST_TWEET_DATE, KERAS_SAVE_LOCATION
 
@@ -50,7 +50,7 @@ def train():
     TrendPredictionData.objects.all().delete()
     days = []
     day = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=20)
-    while day > OLDEST_TWEET_DATE:
+    while day > OLDEST_TWEET_DATE - timedelta(days=20):
         days.append(day)
         day -= timedelta(days=1)
     x_text = []
@@ -109,10 +109,12 @@ def get_data_by_date(day:datetime):
     trend = TrendOccurrence.objects.filter(date=day.date()).values_list('trend__name',flat=True)
     trend = trend[:min([DAILY_MAX_TREND, len(trend)])]
     trend += ['#####'] * (DAILY_MAX_TREND - len(trend))
+    trend = [trend_preprocess(tre) for tre in trend]
     # print(trend)
     out = TrendOccurrence.objects.filter(date=day.date()+timedelta(days=1)).\
         order_by('-tweet_count').values_list('trend__name',flat=True)
     out = out[:min([TRENDS_NUMBER,len(out)])]
     out += ['#####'] * (TRENDS_NUMBER - len(out))
+    out = [trend_preprocess(o) for o in out]
     # print(out)
     return text,trend,out
