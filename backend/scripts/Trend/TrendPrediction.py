@@ -59,6 +59,8 @@ def train():
     random.shuffle(days)
     for day in days:
         text,trend,out = get_data_by_date(day)
+        if out is None:
+            continue
         # break
         x_text.append(text)
         x_trend.append(trend)
@@ -108,12 +110,16 @@ def get_data_by_date(day:datetime):
     # print(text)
     trend = TrendOccurrence.objects.filter(date=day.date()).values_list('trend__name',flat=True)
     trend = trend[:min([DAILY_MAX_TREND, len(trend)])]
+    if len(trend) == 0:
+        return None,None,None
     trend += ['#####'] * (DAILY_MAX_TREND - len(trend))
     trend = [trend_preprocess(tre) for tre in trend]
     # print(trend)
     out = TrendOccurrence.objects.filter(date=day.date()+timedelta(days=1)).\
         order_by('-tweet_count').values_list('trend__name',flat=True)
     out = out[:min([TRENDS_NUMBER,len(out)])]
+    if len(out) == 0:
+        return None,None,None
     out += ['#####'] * (TRENDS_NUMBER - len(out))
     out = [trend_preprocess(o) for o in out]
     # print(out)
