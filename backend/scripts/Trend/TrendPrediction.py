@@ -8,7 +8,7 @@ from keras.models import Sequential, Model
 from keras.layers import Reshape, Input, Dense, Conv1D, MaxPooling1D, GlobalMaxPooling1D, TextVectorization, InputLayer, Concatenate, Embedding
 import tensorflow as tf
 
-from scripts.Trend.config import LDA_SIZE, TRENDS_NUMBER
+from scripts.Trend.config import LDA_SIZE, TRENDS_NUMBER, DAILY_MAX_TREND
 from scripts.preprocess import tweet_preprocess
 from tweet.models import Tweet, Trend, TrendOccurrence, TrendPredictionData
 from twipper.config import OLDEST_TWEET_DATE, KERAS_SAVE_LOCATION
@@ -47,6 +47,7 @@ def create_model():
 
 
 def train():
+    TrendPredictionData.objects.all().delete()
     days = []
     day = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=20)
     while day > OLDEST_TWEET_DATE:
@@ -54,14 +55,13 @@ def train():
         day -= timedelta(days=1)
     x_text = []
     x_trend = []
-    x = []
     y = []
     random.shuffle(days)
     for day in days:
         text,trend,out = get_data_by_date(day)
+        # break
         x_text.append(text)
         x_trend.append(trend)
-        x.append([text,trend])
         y.append(out)
         TrendPredictionData.objects.create(date = day.date(),text=text,topic=trend,target_topic=out)
     return
@@ -104,23 +104,15 @@ def get_data_by_date(day:datetime):
     for txt in texts:
         pre_txt = tweet_preprocess(txt)
         if pre_txt is not None:
-            text += "#" + pre_txt
-    trends = TrendOccurrence.objects.filter(date=day.date(),trend__topic__isnull=False).values('trend__topic')
-    trends = trends[:min([480,trends.count()])]
-    trends = [[round(value/100,4) for value in trend['trend__topic'].values()] for trend in trends ]
-    trend = list(chain.from_iterable(trends))
-    trend += [0] * (480*LDA_SIZE - len(trend))
-    outs = TrendOccurrence.objects.filter(date=day.date()+timedelta(days=1),trend__topic__isnull=False,
-                                          tweet_count__isnull=False).\
-        order_by('-tweet_count').values('trend__topic')
-    outs = outs[:min([5,outs.count()])]
-    outs = [[round(value/100,4) for value in out['trend__topic'].values()] for out in outs ]
-    out = list(chain.from_iterable(outs))
-    out += [0] * (5*LDA_SIZE - len(out))
-
-    # text = np.asarray(text).astype('str').reshape((1,))
-    # print(text.shape)
-    # trend = np.asarray(trend).astype('float32')
-    # out = np.asarray(out).astype('float32')
-
+            text += " " + pre_txt
+    # print(text)
+    trend = TrendOccurrence.objects.filter(date=day.date()).values_list('trend__name',flat=True)
+    trend = trend[:min([DAILY_MAX_TREND, len(trend)])]
+    trend += ['#####'] * (DAILY_MAX_TREND - len(trend))
+    # print(trend)
+    out = TrendOccurrence.objects.filter(date=day.date()+timedelta(days=1)).\
+        order_by('-tweet_count').values_list('trend__name',flat=True)
+    out = out[:min([TRENDS_NUMBER,len(out)])]
+    out += ['#####'] * (TRENDS_NUMBER - len(out))
+    # print(out)
     return text,trend,out

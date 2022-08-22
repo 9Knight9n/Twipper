@@ -18,6 +18,7 @@ from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model,
     save_topics, save_user_topics
 from scripts.ARIMA import arima_forecast, find_best_arima
 # from scripts.Trend.TrendPrediction import train
+from scripts.Trend.TrendPrediction import train
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets
 from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet,\
@@ -431,42 +432,42 @@ def get_table_correlation(request, collection_id):
 
 def scripts(request):
     # create_and_save_model()
-    # train()
+    train()
     # topics, last_date = get_user_topics(None, 7)
     # find_best_arima(topics, forecast_intervals=4)
 
-    save_topics()
-    save_user_topics(7)
-    for row in UserTopic.objects.all().reverse():
-        if UserTopic.objects.filter(week_number=row.week_number, topic_id=row.topic_id,
-                                    twitter_user_id=row.twitter_user_id).count() > 1:
-            row.delete()
-
-    twitter_users = TwitterUser.objects.all()
-    user_topic_arima = []
-    error_users = []
-    for tu in twitter_users:
-        user_id = tu.id
-        topics = get_user_topics(user_id, 7)
-        try:
-            trends_time_series, train_loss, val_loss = arima_forecast(topics, forecast_intervals=2)
-        except:
-            error_users.append(user_id)
-            continue
-        c = 0
-        for key, value in trends_time_series.items():
-            topic_id = LDATopic.objects.get(name=key)
-            twitter_user = TwitterUser.objects.get(id=user_id)
-            arima_value = '_'.join([str(v) for v in value])
-            user_topic_arima.append(UserTopicARIMA(topic=topic_id, twitter_user=twitter_user,
-                                                   train_loss=train_loss[c], val_loss=val_loss[c],
-                                                   value=str(arima_value)))
-            c+=1
-        print(user_id)
-    UserTopicARIMA.objects.bulk_create(user_topic_arima)
-    print('user arima topic saved!')
-    for row in UserTopicARIMA.objects.all().reverse():
-        if UserTopicARIMA.objects.filter(topic_id=row.topic_id,twitter_user_id=row.twitter_user_id).count() > 1:
-            row.delete()
-    print('done with errors', error_users)
+    # save_topics()
+    # save_user_topics(7)
+    # for row in UserTopic.objects.all().reverse():
+    #     if UserTopic.objects.filter(week_number=row.week_number, topic_id=row.topic_id,
+    #                                 twitter_user_id=row.twitter_user_id).count() > 1:
+    #         row.delete()
+    #
+    # twitter_users = TwitterUser.objects.all()
+    # user_topic_arima = []
+    # error_users = []
+    # for tu in twitter_users:
+    #     user_id = tu.id
+    #     topics = get_user_topics(user_id, 7)
+    #     try:
+    #         trends_time_series, train_loss, val_loss = arima_forecast(topics, forecast_intervals=2)
+    #     except:
+    #         error_users.append(user_id)
+    #         continue
+    #     c = 0
+    #     for key, value in trends_time_series.items():
+    #         topic_id = LDATopic.objects.get(name=key)
+    #         twitter_user = TwitterUser.objects.get(id=user_id)
+    #         arima_value = '_'.join([str(v) for v in value])
+    #         user_topic_arima.append(UserTopicARIMA(topic=topic_id, twitter_user=twitter_user,
+    #                                                train_loss=train_loss[c], val_loss=val_loss[c],
+    #                                                value=str(arima_value)))
+    #         c+=1
+    #     print(user_id)
+    # UserTopicARIMA.objects.bulk_create(user_topic_arima)
+    # print('user arima topic saved!')
+    # for row in UserTopicARIMA.objects.all().reverse():
+    #     if UserTopicARIMA.objects.filter(topic_id=row.topic_id,twitter_user_id=row.twitter_user_id).count() > 1:
+    #         row.delete()
+    # print('done with errors', error_users)
     return HttpResponse(f"done.")
