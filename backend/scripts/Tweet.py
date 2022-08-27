@@ -123,7 +123,7 @@ def save_collection_tweets(collection):
 def extract_trend_tweets(trend:Trend,top:int):
     tweets_list = []
     found_all = False
-    for i, tweet in enumerate(sntwitter.TwitterSearchScraper(query='"'+trend.name+'"'+" lang:en min_retweets:100")
+    for i, tweet in enumerate(sntwitter.TwitterSearchScraper(query=trend.name+" lang:en",top=True)
                                       .get_items()):
         tweet_text = tweet_preprocess(tweet.content)
         if tweet_text is None:

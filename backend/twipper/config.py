@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import os
 from pathlib import Path
 
-OLDEST_TWEET_DATE = datetime.now() - timedelta(days=180)
+OLDEST_TWEET_DATE = datetime.now() - timedelta(days=30*24)
 FETCH_INTERVAL_DURATION = timedelta(days=30)
 THREAD_COUNT = 1
 
