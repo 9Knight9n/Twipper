@@ -1,13 +1,15 @@
 import datetime
 import pickle
 
+import after_response
 import requests
 from bs4 import BeautifulSoup
+from django.db.models import Sum, Max
 
 from scripts.LDAExtractor import percentage_results
-from scripts.Trend import HEADER, ARCHIVE_BASE_URL
+from scripts.Trend.config import HEADER, ARCHIVE_BASE_URL, OLDEST_TREND_DATE
 from scripts.Tweet import extract_trend_tweets
-from tweet.models import Place, Trend, TrendOccurrence
+from tweet.models import Place, Trend, TrendOccurrence, Tweet
 from datetime import date
 
 from twipper.config import OLDEST_TWEET_DATE, LDA_SAVE_LOCATION
@@ -51,6 +53,7 @@ def save_trends_by_date_and_place(place: Place, day: date):
                     'time':datetime.datetime.strptime(time,'%H:%M'), 'place':place}
                    for index in range(len(trends_tweet_name))]
 
+
     new_trends = []
     for item in result:
         if item['name'] not in trend_names:
@@ -73,30 +76,41 @@ def save_trends_by_date_and_place(place: Place, day: date):
 
 def save_all_trends_by_place(place: Place):
     day = datetime.date.today() - datetime.timedelta(days=1)
-    while day > OLDEST_TWEET_DATE.date():
+    while day > OLDEST_TREND_DATE.date():
         save_trends_by_date_and_place(place,day)
         day -= datetime.timedelta(days=1)
+    # top = TrendOccurrence.objects.filter(tweet_count__isnull=False,
+    #                                      date = datetime.date.today() - datetime.timedelta(days=1)).\
+    #     values('trend__name').annotate(total_tweet=Max('tweet_count')).order_by('-total_tweet')
+    # print(
+    #     top
+    #     # [top_.id for top_ in top]
+    # )
+
     return TrendOccurrence.objects.filter(place=place)
 
 
-def save_trends_topic():
-    trends = Trend.objects.filter(topic__isnull=True)
-    file = open(LDA_SAVE_LOCATION, 'rb')
-    lda_model = pickle.load(file)
-    file.close()
-    update_trend = []
-    bulk_limit = 50
+@after_response.enable
+def save_trends_tweet():
+    tweets = list(Tweet.objects.all().values_list('twitter_id',flat=True))
+    trend_tweet_count = 100
+    trends = Trend.objects.all()
+    # file = open(LDA_SAVE_LOCATION, 'rb')
+    # lda_model = pickle.load(file)
+    # file.close()
+    tweet_list = []
+    bulk_limit = 100
     for trend in trends:
-        trend_text = extract_trend_tweets(trend, 10)
+        count = Tweet.objects.filter(trend=trend).count()
+        if count >= trend_tweet_count:
+            continue
+        trend_text,tweets = extract_trend_tweets(trend, trend_tweet_count-count,tweets)
         if trend_text is None:
             continue
-        top_trends = lda_model.extract_topics(trend_text)
-        top_trends = percentage_results(top_trends, 8)
-        trend.topic = top_trends
-        update_trend.append(trend)
-        if len(update_trend) > bulk_limit:
-            Trend.objects.bulk_update(update_trend,['topic'])
-            update_trend = []
-            print('added some')
-    Trend.objects.bulk_update(update_trend,['topic'])
+        tweet_list += trend_text
+        if len(tweet_list) > bulk_limit:
+            Tweet.objects.bulk_create(tweet_list)
+            tweet_list = []
+            print('added some tweets')
+    Tweet.objects.bulk_create(tweet_list)
 

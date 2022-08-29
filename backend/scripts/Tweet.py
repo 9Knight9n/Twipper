@@ -2,6 +2,7 @@ import snscrape.modules.twitter as sntwitter
 from datetime import datetime, timedelta
 import after_response
 
+from scripts.User import get_user_by_username
 from scripts.preprocess import tweet_preprocess
 from tweet.models import TwitterUser, FetchedInterval, Tweet, CollectionTwitterUser, Trend
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION
@@ -115,23 +116,47 @@ def save_collection_tweets(collection):
     users_id = CollectionTwitterUser.objects.filter(collection=collection).values('twitter_user__id')
     users = TwitterUser.objects.filter(id__in=[user_id['twitter_user__id'] for user_id in users_id])
     for user in users:
+        print(f'getting tweets for {user.username}...')
         get_user_tweets(user).count()
     collection.status = 'done'
     collection.save()
 
 
-def extract_trend_tweets(trend:Trend,top:int):
+def extract_trend_tweets(trend:Trend,top:int,tweets:list):
     tweets_list = []
-    found_all = False
-    for i, tweet in enumerate(sntwitter.TwitterSearchScraper(query='"'+trend.name+'"'+" lang:en min_retweets:100")
+    for i, tweet in enumerate(sntwitter.TwitterSearchScraper(query=trend.name+" lang:en",top=True)
                                       .get_items()):
+        if tweet.id in tweets:
+            continue
         tweet_text = tweet_preprocess(tweet.content)
         if tweet_text is None:
             continue
-        tweets_list.append(tweet_text)
+        user = get_user_by_username(tweet.user.username)
+        if isinstance(user,str):
+            continue
+        tweets_list.append(Tweet(
+            twitter_user=user,
+            twitter_id=tweet.id,
+            url=tweet.url,
+            date=tweet.date,
+            content=tweet.content,
+            reply_count=tweet.replyCount,
+            retweet_count=tweet.retweetCount,
+            like_count=tweet.likeCount,
+            quote_count=tweet.quoteCount,
+            twitter_conversation_id=tweet.conversationId,
+            lang=tweet.lang,
+            sourceLabel=tweet.sourceLabel,
+            tweeter_in_reply_to_tweet_id=tweet.inReplyToTweetId,
+            # longitude = tweet.place.longitude if tweet.place and tweet.place.longitude else None,
+            # latitude = tweet.place.latitude if tweet.place and tweet.place.latitude else None,
+            fetched_interval=None,
+            trend=trend
+        ))
+        tweets.append(tweet.id)
+        # tweets_list.append(tweet_text)
         if len(tweets_list) == top:
-            found_all = True
             break
-    if not found_all:
+    if len(tweets_list) < 10:
         return None
-    return tweets_list
+    return tweets_list,tweets
