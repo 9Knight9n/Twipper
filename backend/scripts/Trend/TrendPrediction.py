@@ -4,6 +4,7 @@ from itertools import chain
 
 import numpy as np
 import pytz
+from django.db.models import Max
 from keras.models import Sequential, Model
 from keras.layers import Reshape, Input, Dense, Conv1D, MaxPooling1D, GlobalMaxPooling1D, TextVectorization, InputLayer, Concatenate, Embedding
 import tensorflow as tf
@@ -108,19 +109,20 @@ def get_data_by_date(day:datetime):
         if pre_txt is not None:
             text += " " + pre_txt
     # print(text)
-    trend = TrendOccurrence.objects.filter(date=day.date()).values_list('trend__name',flat=True)
+    trend = TrendOccurrence.objects.filter(date=day.replace(tzinfo=pytz.UTC).date()).values_list('trend__name',flat=True)
     trend = trend[:min([DAILY_MAX_TREND, len(trend)])]
-    if len(trend) == 0:
+    if len(trend) < 10:
         return None,None,None
-    trend += ['#####'] * (DAILY_MAX_TREND - len(trend))
     trend = [trend_preprocess(tre) for tre in trend]
+    while '#####' in trend: trend.remove('#####')
     # print(trend)
-    out = TrendOccurrence.objects.filter(date=day.date()+timedelta(days=1)).\
-        order_by('-tweet_count').values_list('trend__name',flat=True)
+    out = TrendOccurrence.objects.filter(date=day.replace(tzinfo=pytz.UTC).date()+timedelta(days=1)
+                                         ,tweet_count__isnull=False).values('trend__name').\
+        annotate(total_tweet=Max('tweet_count')).order_by('-total_tweet')
+    out = [o['trend__name'] for o in out]
     out = out[:min([TRENDS_NUMBER,len(out)])]
     if len(out) == 0:
         return None,None,None
-    out += ['#####'] * (TRENDS_NUMBER - len(out))
     out = [trend_preprocess(o) for o in out]
-    # print(out)
+    while '#####' in out:out.remove('#####')
     return text,trend,out

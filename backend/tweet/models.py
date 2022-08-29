@@ -36,6 +36,15 @@ class FetchedInterval(models.Model):
                f'complete:{self.complete}'
 
 
+class Trend(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255, null=False)
+    topic = models.JSONField(null=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Tweet(models.Model):
     id = models.AutoField(primary_key=True)
     twitter_user = models.ForeignKey(TwitterUser, on_delete=models.CASCADE, related_name='twitter_user')
@@ -58,7 +67,8 @@ class Tweet(models.Model):
                                          null=True)
     longitude = models.FloatField(null=True)
     latitude = models.FloatField(null=True)
-    fetched_interval = models.ForeignKey(FetchedInterval, on_delete=models.CASCADE, related_name='fetched_interval')
+    fetched_interval = models.ForeignKey(FetchedInterval, on_delete=models.CASCADE, related_name='fetched_interval',null=True)
+    trend = models.ForeignKey(Trend, on_delete=models.CASCADE, related_name='trend',null=True)
 
     # place =
 
@@ -93,15 +103,6 @@ class Place(models.Model):
         return self.name
 
 
-class Trend(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255, null=False)
-    topic = models.JSONField(null=True)
-
-    def __str__(self):
-        return self.name
-
-
 class TrendOccurrence(models.Model):
     id = models.AutoField(primary_key=True)
     trend = models.ForeignKey(Trend, on_delete=models.CASCADE, null=False)
@@ -109,6 +110,7 @@ class TrendOccurrence(models.Model):
     time = models.TimeField(null=True)
     place = models.ForeignKey(Place, on_delete=models.CASCADE, null=False)
     tweet_count = models.IntegerField(null=True)
+    # top = models.BooleanField(default=False)
 
     def __str__(self):
         return self.trend.name + ":" + str(self.date)

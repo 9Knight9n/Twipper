@@ -18,11 +18,12 @@ from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model,
     save_topics, save_user_topics
 from scripts.ARIMA import arima_forecast, find_best_arima
 # from scripts.Trend.TrendPrediction import train
+from scripts.Trend.Trend import save_all_trends_by_place, save_trends_tweet
 from scripts.Trend.TrendPrediction import train
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets, extract_trend_tweets
 from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet, \
-    TrendOccurrence, UserTopic, LDATopic, UserTopicARIMA, Trend
+    TrendOccurrence, UserTopic, LDATopic, UserTopicARIMA, Trend, Place
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_LOCATION
 
 
@@ -379,10 +380,12 @@ def get_table_correlation(request, collection_id):
 def scripts(request):
     # create_and_save_model()
     # train()
-    print(extract_trend_tweets(Trend.objects.create(name="iran"),5))
-
+    save_all_trends_by_place(Place.objects.get(name='united-states'))
+    save_trends_tweet.after_response()
+    # print(extract_trend_tweets(Trend.objects.create(name="iran"),5))
     # collection = Collection.objects.get(id=5)
-    # save_collection_tweets.after_response(collection)
+    # for i in range(100):
+    #     save_collection_tweets(collection)
     # topics, last_date = get_user_topics(None, 7)
     # find_best_arima(topics, forecast_intervals=4)
 
@@ -414,6 +417,7 @@ def scripts(request):
     #                                                value=str(arima_value)))
     #         c+=1
     #     print(user_id)
+
     # UserTopicARIMA.objects.bulk_create(user_topic_arima)
     # print('user arima topic saved!')
     # for row in UserTopicARIMA.objects.all().reverse():
