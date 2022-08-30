@@ -2,6 +2,7 @@ import datetime
 import pickle
 
 import after_response
+import pytz
 import requests
 from bs4 import BeautifulSoup
 from django.db.models import Sum, Max
@@ -9,6 +10,7 @@ from django.db.models import Sum, Max
 from scripts.LDAExtractor import percentage_results
 from scripts.Trend.config import HEADER, ARCHIVE_BASE_URL, OLDEST_TREND_DATE
 from scripts.Tweet import extract_trend_tweets
+from scripts.preprocess import tweet_preprocess
 from tweet.models import Place, Trend, TrendOccurrence, Tweet
 from datetime import date
 
@@ -93,8 +95,13 @@ def save_all_trends_by_place(place: Place):
 @after_response.enable
 def save_trends_tweet():
     tweets = list(Tweet.objects.all().values_list('twitter_id',flat=True))
-    trend_tweet_count = 100
-    trends = Trend.objects.all()
+    trend_tweet_count = 10
+    trends_id = TrendOccurrence.objects.filter(date__lte=datetime.datetime.now().replace(tzinfo=pytz.UTC).date(),
+                                               date__gte=OLDEST_TREND_DATE.replace(tzinfo=pytz.UTC).date()).\
+        values_list('trend_id',flat=True)
+    trends_id = list(trends_id)
+    trends = Trend.objects.filter(id__in=trends_id)
+    # print(trends.count())
     # file = open(LDA_SAVE_LOCATION, 'rb')
     # lda_model = pickle.load(file)
     # file.close()
@@ -114,3 +121,21 @@ def save_trends_tweet():
             print('added some tweets')
     Tweet.objects.bulk_create(tweet_list)
 
+    Trend.objects.all().update(topic=None)
+    bulk_update = []
+    update_limit = 100
+    for trend in trends:
+        texts = Tweet.objects.filter(trend=trend).values_list('content', flat=True)
+        text = ''
+        for txt in texts:
+            pre_txt = tweet_preprocess(txt)
+            if pre_txt is not None:
+                text += " " + pre_txt
+        if len(text) < 100:
+            continue
+        trend.topic = text
+        bulk_update.append(trend)
+        if len(bulk_update) > update_limit:
+            Trend.objects.bulk_update(bulk_update,['topic'])
+            bulk_update = []
+    Trend.objects.bulk_update(bulk_update, ['topic'])

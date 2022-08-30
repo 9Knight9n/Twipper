@@ -123,6 +123,7 @@ def save_collection_tweets(collection):
 
 
 def extract_trend_tweets(trend:Trend,top:int,tweets:list):
+    tweets_cp = tweets.copy()
     tweets_list = []
     for i, tweet in enumerate(sntwitter.TwitterSearchScraper(query=trend.name+" lang:en",top=True)
                                       .get_items()):
@@ -158,5 +159,5 @@ def extract_trend_tweets(trend:Trend,top:int,tweets:list):
         if len(tweets_list) == top:
             break
     if len(tweets_list) < 10:
-        return None
+        return None,tweets_cp
     return tweets_list,tweets
