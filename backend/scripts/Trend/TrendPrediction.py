@@ -48,6 +48,7 @@ from twipper.config import OLDEST_TWEET_DATE, KERAS_SAVE_LOCATION
 
 
 def train():
+    accepted_trends = Trend.objects.filter(topic__isnull=False).values_list('name',flat=True)
     TrendPredictionData.objects.all().delete()
     days = []
     day = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
@@ -59,7 +60,7 @@ def train():
     y = []
     random.shuffle(days)
     for day in days:
-        text,trend,out = get_data_by_date(day)
+        text,trend,out = get_data_by_date(day,accepted_trends)
         if out is None:
             continue
         # break
@@ -101,7 +102,7 @@ def train():
     # model.save(KERAS_SAVE_LOCATION)
 
 
-def get_data_by_date(day:datetime):
+def get_data_by_date(day:datetime,accepted_trends:list):
     texts = Tweet.objects.filter(date__gte=day.replace(tzinfo=pytz.UTC), date__lte=day.replace(tzinfo=pytz.UTC) + timedelta(days=1)).values_list('content', flat=True)
     text = ''
     for txt in texts:
@@ -111,8 +112,7 @@ def get_data_by_date(day:datetime):
     # print(text)
     trend = TrendOccurrence.objects.filter(date=day.replace(tzinfo=pytz.UTC).date()).values_list('trend__name',flat=True)
     trend = trend[:min([DAILY_MAX_TREND, len(trend)])]
-    trend = [trend_preprocess(tre) for tre in trend]
-    while '#####' in trend: trend.remove('#####')
+    trend = [tre for tre in trend if tre in accepted_trends]
     if len(trend) < 10:
         return None,None,None
     # print(trend)
@@ -121,8 +121,7 @@ def get_data_by_date(day:datetime):
         annotate(total_tweet=Max('tweet_count')).order_by('-total_tweet')
     out = [o['trend__name'] for o in out]
     out = out[:min([TRENDS_NUMBER,len(out)])]
-    out = [trend_preprocess(o) for o in out]
-    while '#####' in out:out.remove('#####')
+    out = [o for o in out if o in accepted_trends]
     if len(out) == 0:
         return None,None,None
     return text,trend,out
