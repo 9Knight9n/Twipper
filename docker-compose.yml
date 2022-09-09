@@ -22,6 +22,8 @@ services:
             POSTGRES_PASSWORD: 'rS9ytkgUxFo9z#'
             POSTGRES_DB: 'TwipperDB'
             PGDATA: /var/lib/postgresql/data/pgdata
+        ports:
+            - "3002:5432"
         volumes:
             - data_volume:/var/lib/postgresql/data
         restart: unless-stopped
