@@ -90,8 +90,8 @@ DATABASES = {
         'NAME': 'TwipperDB',
         'USER': 'dbadmin',
         'PASSWORD': 'rS9ytkgUxFo9z#',
-        'HOST': 'db',   # Or an IP Address that your DB is hosted on
-        'PORT': '5432',
+        'HOST': '37.156.144.109',   # Or an IP Address that your DB is hosted on
+        'PORT': '9103',
     }
     # 'default': {
     #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
