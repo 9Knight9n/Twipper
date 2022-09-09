@@ -6,6 +6,8 @@ from scripts.User import get_user_by_username
 from scripts.preprocess import tweet_preprocess
 from tweet.models import TwitterUser, FetchedInterval, Tweet, CollectionTwitterUser, Trend
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION
+from scripts.Trend.config import HEADER, ARCHIVE_BASE_URL, OLDEST_TREND_DATE, NEWEST_TREND_DATE
+import pytz
 
 
 def _get_delta_time_before(date_time: datetime):
@@ -125,7 +127,9 @@ def save_collection_tweets(collection):
 def extract_trend_tweets(trend:Trend,top:int,tweets:list):
     tweets_cp = tweets.copy()
     tweets_list = []
-    for i, tweet in enumerate(sntwitter.TwitterSearchScraper(query=trend.name+" lang:en",top=True)
+    start = OLDEST_TREND_DATE.replace(tzinfo=pytz.UTC).strftime("%Y-%m-%d")
+    stop = NEWEST_TREND_DATE.replace(tzinfo=pytz.UTC).strftime("%Y-%m-%d")
+    for i, tweet in enumerate(sntwitter.TwitterSearchScraper(query=trend.name+" lang:en until:" + stop)
                                       .get_items()):
         if tweet.id in tweets:
             continue
@@ -158,6 +162,4 @@ def extract_trend_tweets(trend:Trend,top:int,tweets:list):
         # tweets_list.append(tweet_text)
         if len(tweets_list) == top:
             break
-    if len(tweets_list) < 10:
-        return None,tweets_cp
     return tweets_list,tweets

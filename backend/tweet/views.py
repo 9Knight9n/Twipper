@@ -378,15 +378,20 @@ def get_table_correlation(request, collection_id):
 
 
 def scripts(request):
+    # d1,d2 = extract_trend_tweets(Trend.objects.create(name="Arsenal"),5,list(Tweet.objects.all().values_list('twitter_id',flat=True)))
+    # print(d1)
+    save_all_trends_by_place(Place.objects.get(name='united-states'))
+    save_trends_tweet.after_response()
+    
     # create_and_save_model()
-    train()
-    # save_all_trends_by_place(Place.objects.get(name='united-states'))
+    # train()
+    
     # import nltk
     #
     # nltk.download('stopwords')
     # nltk.download('wordnet')
     # nltk.download('omw-1.4')
-    # save_trends_tweet.after_response()
+    
     # print(extract_trend_tweets(Trend.objects.create(name="iran"),5))
     # collection = Collection.objects.get(id=5)
     # for i in range(100):
