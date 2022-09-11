@@ -18,7 +18,7 @@ from scripts.LDAExtractor import LDA, percentage_results, create_and_save_model,
     save_topics, save_user_topics
 from scripts.ARIMA import arima_forecast, find_best_arima
 # from scripts.Trend.TrendPrediction import train
-from scripts.Trend.Trend import save_all_trends_by_place, save_trends_tweet
+from scripts.Trend.Trend import save_all_trends_by_place, save_trends_tweet, save_places
 from scripts.Trend.TrendPrediction import train
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets, extract_trend_tweets
@@ -380,7 +380,7 @@ def get_table_correlation(request, collection_id):
 
 def scripts(request):
 
-
+    save_places()
     trends_id = TrendOccurrence.objects.filter(date__lte=NEWEST_TREND_DATE.replace(tzinfo=pytz.UTC).date(),
                                             date__gte=OLDEST_TREND_DATE.replace(tzinfo=pytz.UTC).date()).\
     values_list('trend_id',flat=True)
