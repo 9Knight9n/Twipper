@@ -10,4 +10,6 @@ HEADER = {
                   'Safari/537.36 QIHU 360SE '
 }
 
-OLDEST_TREND_DATE = datetime.now() - timedelta(days=30*6+1)
+# OLDEST_TREND_DATE = datetime.now() - timedelta(days=30*6+1)
+OLDEST_TREND_DATE = datetime(2022, 8, 1)
+NEWEST_TREND_DATE = datetime(2022, 8, 15)
