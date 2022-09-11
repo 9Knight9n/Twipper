@@ -1,3 +1,6 @@
 from tweet.models import Collection
 
-collections = Collection.objects.update(status='done')
+try:
+    collections = Collection.objects.update(status='done')
+except:
+    print('no collection table.')
