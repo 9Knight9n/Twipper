@@ -157,3 +157,19 @@ class UserTopicARIMA(models.Model):
 
     def __str__(self):
         return self.topic.name+ ':' + self.value
+    
+    
+class Trend_TABLEDATA(models.Model):
+    id = models.AutoField(primary_key=True)
+    username = models.CharField(max_length=16)
+    text = models.TextField()
+    date = models.DateTimeField()
+    trend = models.CharField(max_length=255)
+    # topic = models.ForeignKey(LDATopic, on_delete=models.CASCADE, null=False)
+    # twitter_user = models.ForeignKey(TwitterUser, on_delete=models.CASCADE)
+    # value = models.CharField(max_length=255,null=False, default='')
+    # train_loss = models.FloatField(null=False, default=0)
+    # val_loss = models.FloatField(null=False, default=0)
+
+    def __str__(self):
+        return self.topic.name+ ':' + self.value

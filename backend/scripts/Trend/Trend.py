@@ -94,8 +94,11 @@ def save_trends_tweet():
     trends_id = list(trends_id)
     trends = Trend.objects.filter(id__in=trends_id)
     tweet_list = []
-    bulk_limit = 100
+    bulk_limit = 1000
+    c = 0
     for trend in trends:
+        c += 1
+        print(f'added tweets for {c} trends.')
         count = Tweet.objects.filter(trend=trend).count()
         if count >= trend_tweet_count:
             continue
@@ -106,7 +109,6 @@ def save_trends_tweet():
         if len(tweet_list) > bulk_limit:
             Tweet.objects.bulk_create(tweet_list)
             tweet_list = []
-            # print('added some tweets')
     Tweet.objects.bulk_create(tweet_list)
 
     # Trend.objects.all().update(topic=None)

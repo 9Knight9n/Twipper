@@ -23,8 +23,9 @@ from scripts.Trend.TrendPrediction import train
 from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets, extract_trend_tweets
 from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet, \
-    TrendOccurrence, UserTopic, LDATopic, UserTopicARIMA, Trend, Place
+    TrendOccurrence, UserTopic, LDATopic, UserTopicARIMA, Trend, Place,Trend_TABLEDATA
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_LOCATION
+from scripts.Trend.config import HEADER, ARCHIVE_BASE_URL, OLDEST_TREND_DATE, NEWEST_TREND_DATE
 
 
 def index(request):
@@ -378,10 +379,26 @@ def get_table_correlation(request, collection_id):
 
 
 def scripts(request):
-    # d1,d2 = extract_trend_tweets(Trend.objects.create(name="Arsenal"),5,list(Tweet.objects.all().values_list('twitter_id',flat=True)))
-    # print(d1)
+
+
+    trends_id = TrendOccurrence.objects.filter(date__lte=NEWEST_TREND_DATE.replace(tzinfo=pytz.UTC).date(),
+                                            date__gte=OLDEST_TREND_DATE.replace(tzinfo=pytz.UTC).date()).\
+    values_list('trend_id',flat=True)
+    trends_id = list(trends_id)
+    trends = Trend.objects.filter(id__in=trends_id)
+    print(f'trends count:{trends.count()}')
+    tweets = Tweet.objects.filter(trend__in=trends).values('twitter_user__username','content','date','trend__name')
+    print(f'tweets count:{tweets.count()}')
     save_all_trends_by_place(Place.objects.get(name='united-states'))
     save_trends_tweet.after_response()
+    Trend_TABLEDATA.objects.all().delete()
+    li = []
+    for item in tweets:
+        li.append(Trend_TABLEDATA(username = item['twitter_user__username'], text = item['content'], date = item['date'], trend = item['trend__name']))
+    Trend_TABLEDATA.objects.bulk_create(li)
+    
+    
+    
     
     # create_and_save_model()
     # train()

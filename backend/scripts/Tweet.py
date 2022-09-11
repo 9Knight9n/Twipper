@@ -133,9 +133,9 @@ def extract_trend_tweets(trend:Trend,top:int,tweets:list):
                                       .get_items()):
         if tweet.id in tweets:
             continue
-        tweet_text = tweet_preprocess(tweet.content)
-        if tweet_text is None:
-            continue
+        # tweet_text = tweet_preprocess(tweet.content)
+        # if tweet_text is None:
+            # continue
         user = get_user_by_username(tweet.user.username)
         if isinstance(user,str):
             continue
