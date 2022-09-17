@@ -27,6 +27,8 @@ from tweet.models import TwitterUser, Collection, CollectionTwitterUser, Fetched
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_LOCATION
 from scripts.Trend.config import HEADER, ARCHIVE_BASE_URL, OLDEST_TREND_DATE, NEWEST_TREND_DATE
 
+import after_responsec
+
 
 def index(request):
     return HttpResponse("Hello, world. You're at the Twipper index.")
@@ -378,24 +380,51 @@ def get_table_correlation(request, collection_id):
                                          {'name': 'stability correlation with valloss', 'value':round(corr[2],2)}]})
 
 
-def scripts(request):
 
-    save_places()
-    trends_id = TrendOccurrence.objects.filter(date__lte=NEWEST_TREND_DATE.replace(tzinfo=pytz.UTC).date(),
-                                            date__gte=OLDEST_TREND_DATE.replace(tzinfo=pytz.UTC).date()).\
-    values_list('trend_id',flat=True)
-    trends_id = list(trends_id)
-    trends = Trend.objects.filter(id__in=trends_id)
-    print(f'trends count:{trends.count()}')
-    tweets = Tweet.objects.filter(trend__in=trends).values('twitter_user__username','content','date','trend__name')
-    print(f'tweets count:{tweets.count()}')
-    save_all_trends_by_place(Place.objects.get(name='united-states'))
-    save_trends_tweet.after_response()
-    Trend_TABLEDATA.objects.all().delete()
-    li = []
-    for item in tweets:
-        li.append(Trend_TABLEDATA(username = item['twitter_user__username'], text = item['content'], date = item['date'], trend = item['trend__name']))
-    Trend_TABLEDATA.objects.bulk_create(li)
+@after_response.enable
+def async_func():
+    f = open("files/sajad_crawl_users.txt", "r")
+    users = f.read().split(',')
+    f.close()
+    print(users)
+    total = len(users)
+    for index,user in enumerate(users):
+        print(f'{round((index/total)*100,2)}')
+        try:
+            get_user_tweets(get_user_by_username(user))
+        except Exception as e:
+            print(e.__str__)
+
+
+def scripts(request):
+    async_func.after_response()
+
+
+
+
+
+
+
+
+
+
+
+    # save_places()
+    # trends_id = TrendOccurrence.objects.filter(date__lte=NEWEST_TREND_DATE.replace(tzinfo=pytz.UTC).date(),
+    #                                         date__gte=OLDEST_TREND_DATE.replace(tzinfo=pytz.UTC).date()).\
+    # values_list('trend_id',flat=True)
+    # trends_id = list(trends_id)
+    # trends = Trend.objects.filter(id__in=trends_id)
+    # print(f'trends count:{trends.count()}')
+    # tweets = Tweet.objects.filter(trend__in=trends).values('twitter_user__username','content','date','trend__name')
+    # print(f'tweets count:{tweets.count()}')
+    # save_all_trends_by_place(Place.objects.get(name='united-states'))
+    # save_trends_tweet.after_response()
+    # Trend_TABLEDATA.objects.all().delete()
+    # li = []
+    # for item in tweets:
+    #     li.append(Trend_TABLEDATA(username = item['twitter_user__username'], text = item['content'], date = item['date'], trend = item['trend__name']))
+    # Trend_TABLEDATA.objects.bulk_create(li)
     
     
     
