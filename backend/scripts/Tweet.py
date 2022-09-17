@@ -85,7 +85,8 @@ def get_user_tweets(user:TwitterUser):
     fetched_intervals = FetchedInterval.objects.filter(twitter_user=user).order_by('-interval_start')\
         .values('interval_start','id')
     if len(fetched_intervals) == 0:
-        intervals = _get_delta_time_before(datetime.now())
+        # intervals = _get_delta_time_before(datetime.now())
+        intervals = _get_delta_time_before(datetime(2022, 8, 16))
     else:
         interval_start_example = datetime.combine(fetched_intervals[0]['interval_start'], datetime.min.time())
         intervals = _get_delta_time_before(interval_start_example) + _get_delta_time_after(interval_start_example)
@@ -93,16 +94,21 @@ def get_user_tweets(user:TwitterUser):
             interval_start = datetime.combine(fetched_interval['interval_start'], datetime.min.time())
             intervals = _remove_interval_from_list(intervals,(interval_start,interval_start+FETCH_INTERVAL_DURATION))
 
+    count = 0
     for interval in intervals:
+        if count > 100:
+            break
         tweets_list = extract_user_tweets(user,interval)
         try:
             Tweet.objects.bulk_create(tweets_list)
+            count += len(tweets_list)
         except Exception as e:
             print("error in bulk request.")
             print('trying to save one by one.')
             for obj in tweets_list:
                 try:
                     obj.save()
+                    count += 1
                 except Exception as e:
                     print(f'error in save of {obj}')
                     print(e.__str__())
