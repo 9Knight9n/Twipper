@@ -27,7 +27,7 @@ from tweet.models import TwitterUser, Collection, CollectionTwitterUser, Fetched
 from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_LOCATION
 from scripts.Trend.config import HEADER, ARCHIVE_BASE_URL, OLDEST_TREND_DATE, NEWEST_TREND_DATE
 
-import after_responsec
+import after_response
 
 
 def index(request):
