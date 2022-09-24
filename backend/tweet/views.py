@@ -389,7 +389,7 @@ def async_func():
     print(users)
     total = len(users)
     for index,user in enumerate(users):
-        print(f'{round((index/total)*100,2)}')
+        print(f'{index} out of {total} : {round((index/total)*100,2)}')
         try:
             get_user_tweets(get_user_by_username(user))
         except Exception as e:
@@ -398,13 +398,6 @@ def async_func():
 
 def scripts(request):
     async_func.after_response()
-
-
-
-
-
-
-
 
 
 
