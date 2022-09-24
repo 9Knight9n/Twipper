@@ -86,7 +86,7 @@ def get_user_tweets(user:TwitterUser):
         .values('interval_start','id')
     if len(fetched_intervals) == 0:
         # intervals = _get_delta_time_before(datetime.now())
-        intervals = _get_delta_time_before(datetime(2022, 8, 16))
+        intervals = _get_delta_time_before(datetime(2022, 8, 1)- timedelta(days=1))
     else:
         interval_start_example = datetime.combine(fetched_intervals[0]['interval_start'], datetime.min.time())
         intervals = _get_delta_time_before(interval_start_example) + _get_delta_time_after(interval_start_example)

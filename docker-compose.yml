@@ -16,7 +16,7 @@ services:
 
 
     db:
-        image: postgres:14.2-bullseye
+        image: postgres:14.5-bullseye
         environment:
             POSTGRES_USER: 'dbadmin'
             POSTGRES_PASSWORD: 'rS9ytkgUxFo9z#'
