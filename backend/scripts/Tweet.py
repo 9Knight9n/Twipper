@@ -94,7 +94,7 @@ def get_user_tweets(user:TwitterUser):
             interval_start = datetime.combine(fetched_interval['interval_start'], datetime.min.time())
             intervals = _remove_interval_from_list(intervals,(interval_start,interval_start+FETCH_INTERVAL_DURATION))
 
-    count = 0
+    count = Tweet.objects.filter(twitter_user=user).count()
     for interval in intervals:
         if count > 100:
             break
