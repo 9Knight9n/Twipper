@@ -24,7 +24,7 @@ def _get_delta_time_before(date_time: datetime):
 
 def _get_delta_time_after(date_time: datetime):
     date = date_time.replace(hour=0, minute=0, second=0, microsecond=0)
-    now = NEWEST_TWEET_DATE
+    now = datetime.now()
     delta_date = []
     while date < now:
         new_date = date + FETCH_INTERVAL_DURATION
@@ -89,7 +89,8 @@ def get_user_tweets(user:TwitterUser):
         intervals = _get_delta_time_before(datetime(2022, 8, 1)- timedelta(days=1))
     else:
         interval_start_example = datetime.combine(fetched_intervals[0]['interval_start'], datetime.min.time())
-        intervals = _get_delta_time_before(interval_start_example) + _get_delta_time_after(interval_start_example)
+        # intervals = _get_delta_time_before(interval_start_example) + _get_delta_time_after(interval_start_example)
+        intervals = _get_delta_time_before(interval_start_example)
         for fetched_interval in fetched_intervals:
             interval_start = datetime.combine(fetched_interval['interval_start'], datetime.min.time())
             intervals = _remove_interval_from_list(intervals,(interval_start,interval_start+FETCH_INTERVAL_DURATION))
