@@ -5,7 +5,7 @@ import after_response
 from scripts.User import get_user_by_username
 from scripts.preprocess import tweet_preprocess
 from tweet.models import TwitterUser, FetchedInterval, Tweet, CollectionTwitterUser, Trend
-from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION
+from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, NEWEST_TWEET_DATE
 from scripts.Trend.config import HEADER, ARCHIVE_BASE_URL, OLDEST_TREND_DATE, NEWEST_TREND_DATE
 import pytz
 
@@ -24,7 +24,7 @@ def _get_delta_time_before(date_time: datetime):
 
 def _get_delta_time_after(date_time: datetime):
     date = date_time.replace(hour=0, minute=0, second=0, microsecond=0)
-    now = datetime.now()
+    now = NEWEST_TWEET_DATE
     delta_date = []
     while date < now:
         new_date = date + FETCH_INTERVAL_DURATION
