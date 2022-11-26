@@ -58,12 +58,11 @@ class CollectionIdApiView(APIView):
     def get(self, request, collection_id, *args, **kwargs):
         max_interval = int((NEWEST_TWEET_DATE - OLDEST_TWEET_DATE).days)//int(FETCH_INTERVAL_DURATION.days)
         collection = Collection.objects.get(id=collection_id)
-        if collection.status != 'in progress':
-            save_collection_tweets.after_response(collection)
-            collection.status = 'in progress'
-            collection.save()
         # if collection.status != 'in progress':
         #     save_collection_tweets.after_response(collection)
+        #     collection.status = 'in progress'
+        #     collection.save()
+
         collection_twitter_user = CollectionTwitterUser.objects.filter(collection=collection).values('twitter_user__username','twitter_user__id')
         twitter_user_percentage = []
         for user in collection_twitter_user:
@@ -76,7 +75,8 @@ class CollectionIdApiView(APIView):
         data = {
             'name':collection.name,
             'twitter_user_percentage':twitter_user_percentage,
-            'done':all([item['progress'] == 100 for item in twitter_user_percentage])
+            # 'done':all([item['progress'] == 100 for item in twitter_user_percentage])
+            'done': True
         }
         return Response(data, status=status.HTTP_200_OK)
 
