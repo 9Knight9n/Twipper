@@ -84,17 +84,17 @@ def get_user_tweets(user:TwitterUser):
     FetchedInterval.objects.filter(twitter_user=user,complete=False).delete()
     fetched_intervals = FetchedInterval.objects.filter(twitter_user=user).order_by('-interval_start')\
         .values('interval_start','id')
-    if len(fetched_intervals) == 0:
-        # intervals = _get_delta_time_before(datetime.now())
-        intervals = _get_delta_time_before(datetime(2022, 8, 1)- timedelta(days=1))
-    else:
-        interval_start_example = datetime.combine(fetched_intervals[0]['interval_start'], datetime.min.time())
-        # intervals = _get_delta_time_before(interval_start_example) + _get_delta_time_after(interval_start_example)
-        intervals = _get_delta_time_before(interval_start_example)
-        for fetched_interval in fetched_intervals:
-            interval_start = datetime.combine(fetched_interval['interval_start'], datetime.min.time())
-            intervals = _remove_interval_from_list(intervals,(interval_start,interval_start+FETCH_INTERVAL_DURATION))
-
+    # if len(fetched_intervals) == 0:
+    #     # intervals = _get_delta_time_before(datetime.now())
+    #     intervals = _get_delta_time_before(datetime(2022, 8, 1)- timedelta(days=1))
+    # else:
+    #     interval_start_example = datetime.combine(fetched_intervals[0]['interval_start'], datetime.min.time())
+    #     # intervals = _get_delta_time_before(interval_start_example) + _get_delta_time_after(interval_start_example)
+    #     intervals = _get_delta_time_before(interval_start_example)
+    #     for fetched_interval in fetched_intervals:
+    #         interval_start = datetime.combine(fetched_interval['interval_start'], datetime.min.time())
+    #         intervals = _remove_interval_from_list(intervals,(interval_start,interval_start+FETCH_INTERVAL_DURATION))
+    intervals = []
     count = Tweet.objects.filter(twitter_user=user).count()
     for interval in intervals:
         if count > 100:
