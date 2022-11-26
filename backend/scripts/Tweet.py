@@ -5,7 +5,7 @@ import after_response
 from scripts.User import get_user_by_username
 from scripts.preprocess import tweet_preprocess
 from tweet.models import TwitterUser, FetchedInterval, Tweet, CollectionTwitterUser, Trend
-from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION
+from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, NEWEST_TWEET_DATE
 from scripts.Trend.config import HEADER, ARCHIVE_BASE_URL, OLDEST_TREND_DATE, NEWEST_TREND_DATE
 import pytz
 
@@ -24,7 +24,7 @@ def _get_delta_time_before(date_time: datetime):
 
 def _get_delta_time_after(date_time: datetime):
     date = date_time.replace(hour=0, minute=0, second=0, microsecond=0)
-    now = datetime.now()
+    now = NEWEST_TWEET_DATE
     delta_date = []
     while date < now:
         new_date = date + FETCH_INTERVAL_DURATION
@@ -86,7 +86,7 @@ def get_user_tweets(user:TwitterUser):
         .values('interval_start','id')
     if len(fetched_intervals) == 0:
         # intervals = _get_delta_time_before(datetime.now())
-        intervals = _get_delta_time_before(datetime(2022, 8, 16))
+        intervals = _get_delta_time_before(datetime(2022, 8, 1)- timedelta(days=1))
     else:
         interval_start_example = datetime.combine(fetched_intervals[0]['interval_start'], datetime.min.time())
         intervals = _get_delta_time_before(interval_start_example) + _get_delta_time_after(interval_start_example)
@@ -94,7 +94,7 @@ def get_user_tweets(user:TwitterUser):
             interval_start = datetime.combine(fetched_interval['interval_start'], datetime.min.time())
             intervals = _remove_interval_from_list(intervals,(interval_start,interval_start+FETCH_INTERVAL_DURATION))
 
-    count = 0
+    count = Tweet.objects.filter(twitter_user=user).count()
     for interval in intervals:
         if count > 100:
             break

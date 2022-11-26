@@ -24,7 +24,7 @@ from scripts.User import get_user_by_username
 from scripts.Tweet import get_user_tweets, save_collection_tweets, extract_trend_tweets
 from tweet.models import TwitterUser, Collection, CollectionTwitterUser, FetchedInterval, Tweet, \
     TrendOccurrence, UserTopic, LDATopic, UserTopicARIMA, Trend, Place,Trend_TABLEDATA
-from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_LOCATION
+from twipper.config import OLDEST_TWEET_DATE, FETCH_INTERVAL_DURATION, LDA_SAVE_LOCATION, NEWEST_TWEET_DATE
 from scripts.Trend.config import HEADER, ARCHIVE_BASE_URL, OLDEST_TREND_DATE, NEWEST_TREND_DATE
 
 import after_response
@@ -56,7 +56,7 @@ class CollectionApiView(APIView):
 
 class CollectionIdApiView(APIView):
     def get(self, request, collection_id, *args, **kwargs):
-        max_interval = int((datetime.now() - OLDEST_TWEET_DATE).days)//int(FETCH_INTERVAL_DURATION.days)
+        max_interval = int((NEWEST_TWEET_DATE - OLDEST_TWEET_DATE).days)//int(FETCH_INTERVAL_DURATION.days)
         collection = Collection.objects.get(id=collection_id)
         if collection.status != 'in progress':
             save_collection_tweets.after_response(collection)
@@ -389,7 +389,7 @@ def async_func():
     print(users)
     total = len(users)
     for index,user in enumerate(users):
-        print(f'{round((index/total)*100,2)}')
+        print(f'{index} out of {total} : {round((index/total)*100,2)}')
         try:
             get_user_tweets(get_user_by_username(user))
         except Exception as e:
@@ -398,13 +398,6 @@ def async_func():
 
 def scripts(request):
     async_func.after_response()
-
-
-
-
-
-
-
 
 
 

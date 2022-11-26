@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 OLDEST_TWEET_DATE = datetime(2022, 8, 1) - timedelta(days=30*6)
+NEWEST_TWEET_DATE = datetime(2022, 8, 1)
 FETCH_INTERVAL_DURATION = timedelta(days=1)
 THREAD_COUNT = 1
 
